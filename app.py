@@ -67,7 +67,11 @@ welcome_text = "안녕하세요! 저는 탐방GO의 친구봇 ‘고고’입니
 
 if "messages" not in st.session_state:
     # system 메시지는 보여주진 않고, 대화 히스토리에만 보관합니다.
-    st.session_state.messages = [{"role": "system", "content": system_message}]
+    # st.session_state.messages = [{"role": "system", "content": system_message}]
+     st.session_state.messages = [
+        {"role": "system",    "content": system_message},
+        {"role": "assistant", "content": welcome_text}
+    ]
 
 # ——— 4) 히스토리 렌더링 ———
 for msg in st.session_state.messages[1:]:

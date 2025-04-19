@@ -88,10 +88,10 @@ if prompt := st.chat_input("무엇을 도와드릴까요?😊"):
     # 3) 어시스턴트 말풍선에 스트리밍 텍스트 채워넣기
     assistant_text = ""
     for chunk in stream:
-        delta = chunk.choices[0].delta.get("content", "")
-        assistant_text += delta
-        # 마지막에 한 번만 렌더링해도 되지만, 이렇게 하면 점차 나타납니다.
-        st.markdown(f'<div class="chat-bubble assistant-bubble">{assistant_text}</div>', unsafe_allow_html=True)
-
-    # 4) 히스토리에 최종 응답 저장
-    st.session_state.messages.append({"role": "assistant", "content": assistant_text})
+    # delta는 객체이므로 .content로 가져옵니다.
+    delta = chunk.choices[0].delta.content or ""
+    answer += delta
+    st.markdown(
+        f'<div class="chat-bubble assistant-bubble">{answer}</div>',
+        unsafe_allow_html=True
+    )

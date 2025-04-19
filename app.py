@@ -7,30 +7,36 @@ st.title("탐방GO 챗봇")
 # st.caption("안녕하세요! 저는 탐방GO의 친구봇 ‘고고’예요. 어디로 갈지 고민이라면 언제든 물어보세요! 😊")
 
 # ——— 1) CSS 인라인 정의 ———
-st.markdown("""
-<style>
-.chat-bubble {
-  display: inline-block;         /* block 대신 inline-block으로 폭만큼 딱 */
-  max-width: 80%;
-  padding: 12px 16px;
-  border-radius: 16px;
-  margin: 8px 0;
-  line-height: 1.4;              /* 줄 높이 조절 */
-  white-space: pre-wrap;         /* \n을 그대로 개행 */
-  word-break: break-word;        /* 긴 단어도 말풍선 폭 안에서 적절히 나눔 */
-}
-.user-bubble {
-  background-color: #DCF8C6;
-  margin-left: auto;             /* 오른쪽 정렬 */
-  text-align: right;
-}
-.assistant-bubble {
-  background-color: #F1F0F0;
-  margin-right: auto;            /* 왼쪽 정렬 */
-  text-align: left;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    .chat-bubble {
+      display: block;         /* 한 줄 전체를 차지하도록 */
+      clear: both;            /* 이전 float가 끝난 뒤 새 줄에서 시작 */
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      margin: 8px 0;
+      line-height: 1.4;
+      white-space: pre-wrap;  /* \n 개행 허용 */
+      word-break: break-word; /* 긴 단어도 적절히 줄바꿈 */
+    }
+    /* 오른쪽(유저) 말풍선 */
+    .user-bubble {
+      background-color: #DCF8C6;
+      float: right;
+      text-align: right;
+    }
+    /* 왼쪽(어시스턴트) 말풍선 */
+    .assistant-bubble {
+      background-color: #F1F0F0;
+      float: left;
+      text-align: left;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # ——— 2) OpenAI 클라이언트 초기화 ———
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -73,27 +79,31 @@ for msg in st.session_state.messages[1:]:
 if prompt := st.chat_input("무엇을 도와드릴까요?😊"):
     # 1) 사용자 메시지 히스토리에 추가 & 렌더
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.markdown(f'<div class="chat-bubble user-bubble">{prompt}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="chat-bubble user-bubble">{prompt}</div>',
+        unsafe_allow_html=True
+    )
 
-    # 2) OpenAI 스트리밍 호출
+    # 2) OpenAI 스트리밍 호출 (stream=True 유지해도 되고, stream=False로 바꿔도 무방)
     stream = client.chat.completions.create(
         model=st.session_state.openai_model,
         messages=st.session_state.messages,
         stream=True,
     )
 
-    # 3) 어시스턴트 말풍선에 스트리밍 텍스트 채워넣기
-assistant_text = ""
-for chunk in stream:
-    # delta는 객체이므로 .content로 가져옵니다.
-    delta = chunk.choices[0].delta.content or ""
-    assistant_text += delta
-    
-    # 매 반복마다 최신 텍스트를 렌더링
+    # 3) 스트림 전체를 받아서 한 문자열로 합치기
+    assistant_text = ""
+    for chunk in stream:
+        # delta는 객체이므로 .content로 가져옵니다.
+        assistant_text += chunk.choices[0].delta.content or ""
+
+    # 4) 반복문이 끝난 뒤 한 번만 말풍선에 렌더링
     st.markdown(
         f'<div class="chat-bubble assistant-bubble">{assistant_text}</div>',
         unsafe_allow_html=True
     )
 
-# for 블록이 끝난 뒤 최종 히스토리에 저장
-st.session_state.messages.append({"role": "assistant", "content": assistant_text})
+    # 5) 최종 응답을 세션 히스토리에 저장
+    st.session_state.messages.append(
+        {"role": "assistant", "content": assistant_text}
+    )

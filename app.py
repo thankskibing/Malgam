@@ -9,8 +9,7 @@ st.title("탐방GO 챗봇")
 st.markdown(
     """
     <div style="font-weight:400; font-size:16px; color:#999999;">
-      안녕하세요! 저는 탐방GO의 친구봇 ‘고고’예요.<br>
-      어디로 갈지 고민이라면 언제든 물어보세요! 😊
+      탐방GO의 친구봇 ‘고고’
     </div>
     """,
     unsafe_allow_html=True
@@ -63,7 +62,7 @@ system_message = '''
 한글이 아닌 답변일 때는 다시 생각해서 꼭 한글로 만들어줘
 모든 답변 끝에 답변에 맞는 이모티콘도 추가해줘
 '''
-welcome_text = "안녕하세요! 저는 탐방GO의 친구봇 ‘고고’입니다. 어디로 떠나볼지 고민이라면 언제든 물어보세요! 😊"
+welcome_text = "  안녕하세요! 저는 탐방GO의 친구봇 ‘고고’예요.<br> 어디로 갈지 고민이라면 언제든 물어보세요!😊"
 
 if "messages" not in st.session_state:
     # system 메시지는 보여주진 않고, 대화 히스토리에만 보관합니다.

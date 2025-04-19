@@ -83,6 +83,7 @@ if prompt := st.chat_input("무엇을 도와드릴까요?😊"):
     )
 
     # 3) 어시스턴트 말풍선에 스트리밍 텍스트 채워넣기
+assistant_text = ""
 for chunk in stream:
     # delta는 객체이므로 .content로 가져옵니다.
     delta = chunk.choices[0].delta.content or ""

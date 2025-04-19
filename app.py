@@ -6,15 +6,6 @@ st.image("logo.png", width=100)
 st.title("탐방GO 챗봇")
 # st.caption("안녕하세요! 저는 탐방GO의 친구봇 ‘고고’예요. 어디로 갈지 고민이라면 언제든 물어보세요! 😊")
 
-st.markdown(
-    """
-    <div style="font-weight:400; font-size:16px; color:#999999;">
-      탐방GO의 친구봇 ‘고고’
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 # ——— 1) CSS 인라인 정의 ———
 st.markdown(
     """

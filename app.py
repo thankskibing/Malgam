@@ -7,33 +7,30 @@ st.title("탐방GO 챗봇")
 # st.caption("안녕하세요! 저는 탐방GO의 친구봇 ‘고고’예요. 어디로 갈지 고민이라면 언제든 물어보세요! 😊")
 
 # ——— 1) CSS 인라인 정의 ———
-st.markdown(
-    """
-    <style>
-    /* 말풍선 공통 */
-    .chat-bubble {
-      padding: 12px 16px;
-      border-radius: 16px;
-      margin: 8px 0;
-      max-width: 80%;
-      clear: both;
-    }
-    /* 사용자 말풍선 (오른쪽, 초록) */
-    .user-bubble {
-      background-color: #DCF8C6;
-      float: right;
-      text-align: right;
-    }
-    /* 어시스턴트 말풍선 (왼쪽, 회색) */
-    .assistant-bubble {
-      background-color: #F1F0F0;
-      float: left;
-      text-align: left;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.markdown("""
+<style>
+.chat-bubble {
+  display: inline-block;         /* block 대신 inline-block으로 폭만큼 딱 */
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  margin: 8px 0;
+  line-height: 1.4;              /* 줄 높이 조절 */
+  white-space: pre-wrap;         /* \n을 그대로 개행 */
+  word-break: break-word;        /* 긴 단어도 말풍선 폭 안에서 적절히 나눔 */
+}
+.user-bubble {
+  background-color: #DCF8C6;
+  margin-left: auto;             /* 오른쪽 정렬 */
+  text-align: right;
+}
+.assistant-bubble {
+  background-color: #F1F0F0;
+  margin-right: auto;            /* 왼쪽 정렬 */
+  text-align: left;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ——— 2) OpenAI 클라이언트 초기화 ———
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])

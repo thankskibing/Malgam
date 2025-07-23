@@ -1,10 +1,10 @@
 from openai import OpenAI
 import streamlit as st
 
-st.set_page_config(page_title="탐방GO 챗봇")
+st.set_page_config(page_title="말감 챗봇")
 st.image("logo.png", width=100)
-st.title("탐방GO 챗봇")
-# st.caption("안녕하세요! 저는 탐방GO의 친구봇 ‘고고’예요. 어디로 갈지 고민이라면 언제든 물어보세요! 😊")
+st.title("말감 챗봇")
+# st.caption("안녕하세요! 저는 여러분을 도와줄 ‘말하는 감자 말감이’예요. 궁금한 점이나 고민이 있다면 자유롭게 물어보라감!😊")
 
 # ——— CSS 인라인 ———
 st.markdown(
@@ -46,15 +46,15 @@ if "openai_model" not in st.session_state:
     st.session_state.openai_model = "gpt-3.5-turbo"
 
 system_message = '''
-너의 이름은 GO봇이야.
-너는 장소에 대한 정보를 추천해주고 활동을 추천해주는 역할을 해
-너는 항상 존댓말을 하는 챗봇이야. 다나까나 요 같은 높임말로 절대로 끝내줘
-항상 존댓말로 친근하게 대답해줘.
+너의 이름은 말감이야.
+너는 피그마나 디자인, ai 관련한 질문을 받아주고 고민 상담도 들어줘
+너는 항상 감으로 문장을 끝내줘
+항상 친근하게 대답해줘.
 영어로 질문을 받아도 무조건 한글로 답변해줘.
 한글이 아닌 답변일 때는 다시 생각해서 꼭 한글로 만들어줘
 모든 답변 끝에 답변에 맞는 이모티콘도 추가해줘
 '''
-welcome_text = "  안녕하세요! 저는 탐방GO의 친구봇 ‘고고’예요.<br> 어디로 갈지 고민이라면 언제든 물어보세요!😊"
+welcome_text = "안녕하세요! 저는 여러분을 도와줄 ‘말하는 감자 말감이’예요. 궁금한 점이나 고민이 있다면 자유롭게 물어보라감!😊"
 
 if "messages" not in st.session_state:
     # st.session_state.messages = [{"role": "system", "content": system_message}]
@@ -72,7 +72,7 @@ for msg in st.session_state.messages[1:]:
         st.markdown(f'<div class="chat-bubble assistant-bubble">{text}</div>', unsafe_allow_html=True)
 
 # ——— 사용자 입력 및 응답 처리 ———
-if prompt := st.chat_input("무엇을 도와드릴까요?😊"):
+if prompt := st.chat_input("뭐가 궁금하감?😊"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.markdown(
         f'<div class="chat-bubble user-bubble">{prompt}</div>',

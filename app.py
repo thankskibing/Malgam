@@ -33,44 +33,57 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right;}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left;}
 
-/* -------- 칩 한 줄 캐러셀 (HTML 링크 기반) -------- */
+/* -------- 칩 한 줄 캐러셀 -------- */
 .quick-title{ font-size:15px; margin:4px 0 10px 2px; color:#fff; font-weight:700; }
 
 /* 가로 스크롤 트랙 */
 .chip-scroll{
-  display:flex; gap:10px; overflow-x:auto; overflow-y:hidden; white-space:nowrap;
-  padding:4px 0 8px; -webkit-overflow-scrolling:touch; scrollbar-width:none;
-  mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+  display:flex; gap:10px;
+  overflow-x:auto; overflow-y:hidden; white-space:nowrap;
+  padding:4px 16px 14px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
 .chip-scroll::-webkit-scrollbar{ display:none; }
 
-/* 칩(링크를 버튼처럼) */
+/* 칩 버튼 (흰 배경 + 보라 테두리) */
 .chip-btn{
   display:inline-flex; align-items:center; gap:6px;
   text-decoration:none;
-  background:#FFFFFF;                /* 🔥 배경 흰색 */
-  color:#4B2EFF;                      /* 🔥 글씨 보라 */
-  border:1px solid #7B2BFF;           /* 🔥 테두리 보라 */
+  background:#FFFFFF;
+  color:#4B2EFF;
+  border:1px solid #7B2BFF;
   border-radius:999px;
-  padding:6px 12px;
-  font-size:14px;
-  font-weight:600;
-  box-shadow:0 2px 6px rgba(0,0,0,.08); /* 더 가벼운 그림자 */
+  padding:8px 14px;
+  font-size:14px; font-weight:700;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
   transition:background-color .2s ease, transform .06s ease;
 }
 .chip-btn:hover{
-  background:#F5F1FF;                 /* 🔥 hover 시 연보라 */
+  background:#F5F1FF;
   border-color:#7B2BFF;
 }
 .chip-btn:active{ transform:scale(.98); }
 
-/* 칩 스크롤 아래 여백 */
-.chip-scroll{
-  margin-bottom: 12px; /* 🔥 말풍선과 간격 */
+/* ===== 입력창 스타일 ===== */
+[data-testid="stChatInput"] {
+    background-color: #F5F1FF !important;   /* 연보라 */
+    border-radius: 999px !important;
+    border: 1px solid #E0CCFF !important;   /* 연한 보라 테두리 */
+    box-shadow: 0 -2px 8px rgba(123, 43, 255, 0.15) !important;
+    padding: 6px 12px !important;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* 입력창 간격 */
-[data-testid="stChatInput"]{ margin:0 12px 12px 12px; }
+/* 포커스 시 테두리 & 그림자 강조 */
+[data-testid="stChatInput"]:focus-within {
+    border: 2px solid #7B2BFF !important;   /* 진한 보라 */
+    box-shadow: 0 0 8px rgba(123, 43, 255, 0.4) !important;
+}
+
+/* 입력창 아이콘 색상 보라 */
+[data-testid="stChatInput"] button svg path {
+    fill: #7B2BFF !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -107,17 +120,17 @@ quick_items = [
     "프로토타입 팁", "UX 리서치 설계", "프롬프트 가이드"
 ]
 
-# ----------------- 칩 캐러셀 (HTML 링크) -----------------
+# ----------------- 칩 캐러셀 -----------------
 st.markdown('<p class="quick-title">아래 키워드로 물어볼 수도 있겠감</p>', unsafe_allow_html=True)
 
 html = ['<div class="chip-scroll">']
 for label in quick_items:
     href = f'?chip={quote(label)}'
-    html.append(f'<a class="chip-btn" href="{href}" title="클릭하면 바로 전송돼요">{label}</a>')
+    html.append(f'<a class="chip-btn" href="{href}" target="_self" title="클릭하면 바로 전송돼요">{label}</a>')
 html.append('</div>')
 st.markdown("".join(html), unsafe_allow_html=True)
 
-# ----------------- 인사 말풍선 (버튼 아래 1회 노출) -----------------
+# ----------------- 인사 말풍선 -----------------
 if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
@@ -146,13 +159,11 @@ def send_and_stream(user_text: str):
     st.markdown(f'<div class="chat-bubble assistant-bubble">{assistant_text}</div>', unsafe_allow_html=True)
     st.session_state.messages.append({"role":"assistant","content":assistant_text})
 
-# ----------------- 칩 클릭 처리 (쿼리파라미터) -----------------
+# ----------------- 칩 클릭 처리 -----------------
 qp = st.query_params
 if "chip" in qp:
     picked = unquote(qp["chip"])
-    # 보내기
     send_and_stream(picked)
-    # 파라미터 제거 (새로고침 없이 UI 깔끔하게)
     del st.query_params["chip"]
 
 # ----------------- 입력창 -----------------

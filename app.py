@@ -34,7 +34,9 @@ st.markdown("""
 .topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
 @media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
 
-.chat-card{background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.12);padding:16px 16px 8px;margin:8px 12px 20px}
+.chat-card{background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.12);
+    padding:16px 16px 4px; /* 하단 패딩 4px로 축소 */
+    margin:8px 12px 8px}  /* 카드 하단 여백 줄임 */
 
 .chat-bubble{display:block;clear:both;max-width:80%;padding:12px 16px;border-radius:16px;margin:12px 0;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
@@ -60,7 +62,12 @@ st.markdown("""
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-[data-testid="stChatInput"]{background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
+/* 입력창 - 위 여백 줄이기 */
+[data-testid="stChatInput"]{
+    background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;
+    box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important;
+    margin-top:4px!important; /* 상단 마진 최소화 */
+}
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
@@ -68,7 +75,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------- 상단 바 -----------------
-st.markdown(f'<div class="topbar">{logo_tag("logo.png")}<h1>말감 챗봇</h1></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="topbar">🥔<h1>말감 챗봇</h1></div>', unsafe_allow_html=True)
 
 # ----------------- 카드 시작 -----------------
 st.markdown('<div class="chat-card">', unsafe_allow_html=True)
@@ -116,12 +123,12 @@ for label in chips:
 html.append('</div></div>')
 st.markdown("".join(html), unsafe_allow_html=True)
 
-# ========= 3) 칩 클릭 처리(스피너 포함) — 메시지 렌더 전에 =========
+# ========= 3) 칩 클릭 처리 =========
 qp = st.query_params
 if "chip" in qp:
     picked = unquote(qp["chip"])
-    send_and_stream(picked)      # 스피너 흰색 표시
-    del st.query_params["chip"]  # URL 정리
+    send_and_stream(picked)
+    del st.query_params["chip"]
 
 # ========= 4) 대화 렌더 =========
 for m in st.session_state.messages:

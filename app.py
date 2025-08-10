@@ -44,12 +44,18 @@ st.markdown("""
 
 /* ===== 퀵버튼 안내 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
-.chip-row { margin: 0 16px 10px 16px; }
+.chip-row { margin: 0 12px 8px 12px; }   /* 세로 간격 살짝 축소 */
 
-/* 버튼을 칩처럼(Pill) */
+/* 버튼을 칩처럼(Pill) + 동일 사이즈 강제 */
+:root{
+  --chip-h: 42px;   /* 버튼 높이 */
+  --chip-gap: 8px;  /* 버튼 사이 간격 */
+}
 .chip-btn .stButton>button{
-  width:100%; height:40px;
-  border-radius:100px !important;
+  display:flex; align-items:center; justify-content:center;
+  width:100%; height:var(--chip-h);
+  padding:0 12px;
+  border-radius:9999px !important;      /* = radius 100 효과 */
   background:#fff !important; color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
   font-weight:800; font-size:12px;
@@ -58,6 +64,15 @@ st.markdown("""
 }
 .chip-btn .stButton>button:hover, .chip-btn .stButton>button:focus{
   background:#fff !important;
+}
+/* 버튼 위아래 기본 여백 제거 + 줄 간격 좁히기 */
+.chip-row .stVerticalBlock{ margin:0 !important; padding:0 !important; }
+.chip-row .stButton{ margin:0 !important; }
+/* 버튼 내부 텍스트/이모지 줄바꿈 방지 */
+.chip-btn .stButton > button *{
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
 }
 
 /* 스피너 흰색 */
@@ -77,31 +92,33 @@ st.markdown("""
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 
 /* ─────────── 🔒 강제 3열 고정 (모든 st.columns 대상) ─────────── */
-/* Streamlit 내부 미디어쿼리를 전부 이겨버리기 위해 매우 높은 우선순위로 지정 */
+/* Streamlit 내부 미디어쿼리를 전부 이겨버리기 위해 높은 우선순위 사용 */
 div[data-testid="stHorizontalBlock"].stHorizontalBlock{
   display:flex !important;
   flex-direction:row !important;
   flex-wrap:nowrap !important;
-  gap:10px !important;
+  gap:var(--chip-gap) !important;         /* 간격 통일 */
   align-items:stretch !important;
 }
 div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn{
   padding:0 !important;
-  flex:0 0 calc((100% - 20px)/3) !important;   /* 3열 (gap 10px × 2) */
-  max-width:calc((100% - 20px)/3) !important;
+  flex:0 0 calc((100% - (var(--chip-gap) * 2))/3) !important;   /* 3열 (gap ×2) */
+  max-width:calc((100% - (var(--chip-gap) * 2))/3) !important;
   min-width:0 !important;
 }
 div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn .stVerticalBlock{
   height:auto !important;
 }
-
 /* 640px 이하에서도 한 번 더 못박기 */
 @media (max-width: 640px){
   div[data-testid="stHorizontalBlock"].stHorizontalBlock{
-    display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:10px !important;
+    display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:var(--chip-gap) !important;
   }
   div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn{
-    padding:0 !important; flex:0 0 calc((100% - 20px)/3) !important; max-width:calc((100% - 20px)/3) !important; min-width:0 !important;
+    padding:0 !important;
+    flex:0 0 calc((100% - (var(--chip-gap) * 2))/3) !important;
+    max-width:calc((100% - (var(--chip-gap) * 2))/3) !important;
+    min-width:0 !important;
   }
 }
 </style>

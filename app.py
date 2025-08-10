@@ -49,7 +49,7 @@ st.markdown("""
 :root{
   --chip-h: 40px;    /* 버튼 높이 */
   --chip-gap-x: 8px; /* 가로 간격 */
-  --chip-gap-y: 6px; /* 세로 간격(행 간격) */
+  --chip-gap-y: 2px; /* 세로 간격(행 간격) */
 }
 
 /* 한 줄(3개) 래퍼: 세로 간격만 관리 */

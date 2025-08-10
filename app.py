@@ -43,17 +43,30 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵칩: 전 해상도 3열 × 3줄 고정 ===== */
+/* ===== 퀵칩: 강제 3열 그리드 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
-.chips-wrap{margin:0 16px 18px 16px}
-.chip-grid{
-  display:grid !important;
-  grid-template-columns:repeat(3,minmax(0,1fr)) !important;  /* 항상 3열 유지 */
-  gap:10px !important;
-  width:100% !important;
+
+/* 버튼 컨테이너 그리드 */
+.main .block-container .element-container:has(.stButton) {
+  display: contents !important;
 }
 
-/* 퀵칩 버튼들을 완전히 3x3 그리드로 정렬 */
+/* 연속된 9개의 버튼을 그리드로 배치 */
+.stButton:nth-of-type(1),
+.stButton:nth-of-type(2),
+.stButton:nth-of-type(3),
+.stButton:nth-of-type(4),
+.stButton:nth-of-type(5),
+.stButton:nth-of-type(6),
+.stButton:nth-of-type(7),
+.stButton:nth-of-type(8),
+.stButton:nth-of-type(9) {
+  display: inline-block !important;
+  width: calc(33.33% - 7px) !important;
+  margin: 3px !important;
+  vertical-align: top !important;
+}
+
 .stButton > button {
   background:#fff !important; 
   color:#1F55A4 !important; 
@@ -124,7 +137,7 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (3 × 3) - 순수 Streamlit 컬럼 방식 -----------------
+# ----------------- 퀵칩 (3 × 3) - 강제 인라인 방식 -----------------
 st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
 
 chips = [
@@ -133,19 +146,16 @@ chips = [
     "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-st.markdown('<div class="chips-wrap"><div class="chip-grid">', unsafe_allow_html=True)
+# 3x3 그리드를 위한 wrapper div
+st.markdown('<div style="padding: 0 16px;">', unsafe_allow_html=True)
 
-# 3x3 그리드로 버튼 배치
-for i in range(0, 9, 3):  # 3개씩 끊어서 행 생성
-    cols = st.columns(3)
-    for j, col in enumerate(cols):
-        if i + j < len(chips):
-            with col:
-                if st.button(chips[i + j], key=f"chip_{i+j}", use_container_width=True):
-                    send_and_stream(chips[i + j])
-                    st.rerun()
+# 각 버튼을 개별적으로 생성 (인라인 배치를 위해)
+for i, chip in enumerate(chips):
+    if st.button(chip, key=f"chip_{i}"):
+        send_and_stream(chip)
+        st.rerun()
 
-st.markdown('</div></div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:

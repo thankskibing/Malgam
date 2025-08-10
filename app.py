@@ -52,14 +52,9 @@ st.markdown("""
   gap:10px !important;
   width:100% !important;
 }
-.chip{
-  display:flex !important;
-}
-.chip-btn-display{
-  flex:1 1 auto !important; 
-  display:inline-flex !important; 
-  align-items:center !important; 
-  justify-content:center !important;
+
+/* 퀵칩 버튼들을 완전히 3x3 그리드로 정렬 */
+.stButton > button {
   background:#fff !important; 
   color:#1F55A4 !important; 
   border:1px solid #7B2BFF !important;
@@ -74,23 +69,15 @@ st.markdown("""
   transition:background-color .2s, transform .06s !important;
   cursor:pointer !important;
   width: 100% !important;
-}
-.chip-btn-display:hover{
-  background:#F5F1FF !important;
-}
-.chip-btn-display:active{
-  transform:scale(.98) !important;
+  height: auto !important;
 }
 
-/* 히든 버튼 완전히 숨기기 */
-div[style*="position: absolute; left: -9999px"] {
-  position: absolute !important;
-  left: -9999px !important;
-  top: -9999px !important;
-  visibility: hidden !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
+.stButton > button:hover{
+  background:#F5F1FF !important;
+}
+
+.stButton > button:active{
+  transform:scale(.98) !important;
 }
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
@@ -103,7 +90,6 @@ div[style*="position: absolute; left: -9999px"] {
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
-
 
 </style>
 """, unsafe_allow_html=True)
@@ -123,8 +109,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = [{"role":"system","content":SYSTEM}]
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
-if "selected_chip" not in st.session_state:
-    st.session_state.selected_chip = None
 
 # ----------------- 응답 함수 (흰색 스피너, 출력은 루프에서만) -----------------
 def send_and_stream(user_text: str):
@@ -140,16 +124,7 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (3 × 3) - CSS Grid로 강제 3열 유지 -----------------
-st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
-
-chips = [
-    "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
-    "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
-    "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
-]
-
-# ----------------- 퀵칩 (3 × 3) - Session State 방식 -----------------
+# ----------------- 퀵칩 (3 × 3) - 순수 Streamlit 컬럼 방식 -----------------
 st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
 
 chips = [
@@ -158,67 +133,19 @@ chips = [
     "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# 순수 HTML로 버튼 렌더링 (클릭 이벤트는 form_submit_button으로 처리)
-chip_html = """
-<div class="chips-wrap">
-    <div class="chip-grid">"""
+st.markdown('<div class="chips-wrap"><div class="chip-grid">', unsafe_allow_html=True)
 
-for i, chip in enumerate(chips):
-    chip_html += f"""
-        <div class="chip">
-            <div class="chip-btn-display">
-                {chip}
-            </div>
-        </div>"""
+# 3x3 그리드로 버튼 배치
+for i in range(0, 9, 3):  # 3개씩 끊어서 행 생성
+    cols = st.columns(3)
+    for j, col in enumerate(cols):
+        if i + j < len(chips):
+            with col:
+                if st.button(chips[i + j], key=f"chip_{i+j}", use_container_width=True):
+                    send_and_stream(chips[i + j])
+                    st.rerun()
 
-chip_html += """
-    </div>
-</div>
-"""
-
-st.markdown(chip_html, unsafe_allow_html=True)
-
-# 숨겨진 Streamlit 버튼들로 실제 클릭 처리
-st.markdown('<div style="position: absolute; left: -9999px; top: -9999px;">', unsafe_allow_html=True)
-
-# 각 칩에 대응하는 숨겨진 버튼들
-for i, chip in enumerate(chips):
-    if st.button(f"hidden_{chip}", key=f"hidden_chip_{i}"):
-        st.session_state.selected_chip = chip
-        st.rerun()
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# JavaScript로 숨겨진 버튼 클릭 트리거
-click_script = """
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const chipBtns = document.querySelectorAll('.chip-btn-display');
-    const hiddenBtns = document.querySelectorAll('button[data-testid*="baseButton"]');
-    
-    chipBtns.forEach((btn, index) => {
-        btn.addEventListener('click', function() {
-            // 해당하는 숨겨진 버튼 찾기
-            const targetText = 'hidden_' + btn.textContent;
-            const hiddenBtn = Array.from(hiddenBtns).find(hBtn => 
-                hBtn.textContent.includes(targetText) || 
-                hBtn.getAttribute('aria-label') === targetText
-            );
-            if (hiddenBtn) {
-                hiddenBtn.click();
-            }
-        });
-    });
-});
-</script>
-"""
-
-st.markdown(click_script, unsafe_allow_html=True)
-
-# 선택된 칩 처리
-if st.session_state.selected_chip:
-    send_and_stream(st.session_state.selected_chip)
-    st.session_state.selected_chip = None  # 처리 후 초기화
+st.markdown('</div></div>', unsafe_allow_html=True)
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:
@@ -235,6 +162,7 @@ for m in st.session_state.messages:
 # ----------------- 입력창 -----------------
 if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):
     send_and_stream(txt)
+    st.rerun()
 
 # ----------------- 카드 종료 -----------------
 st.markdown('</div>', unsafe_allow_html=True)

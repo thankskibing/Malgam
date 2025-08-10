@@ -8,21 +8,21 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # ----------------- 스타일 -----------------
 st.markdown("""
 <style>
-/* 상단 기본 헤더/경계선 완전 제거 */
+/* 상단 기본 헤더/경계선 제거 */
 [data-testid="stHeader"] { display: none; }
 
-/* 앱 전체 배경 (보라 그라데이션) */
+/* 보라 그라데이션 배경 */
 .stApp { background: linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%) !important; }
 
-/* 메인 컨테이너 상단 여백 최소화 */
+/* 레이아웃 여백 */
 .block-container { padding-top: 0 !important; }
 
-/* 상단 커스텀 바 */
+/* 상단 바 */
 .top-bar { display:flex; align-items:center; gap:12px; padding:20px 16px 8px; }
 .top-bar img { height:48px; }
 .top-bar h1 { color:#fff; font-size:28px; margin:0; line-height:1; }
 
-/* 카드 */
+/* 카드 래퍼 */
 .chat-card { background:#fff; border-radius:24px; box-shadow:0 12px 40px rgba(0,0,0,.12);
              padding:16px 16px 8px; margin:8px 12px 20px; }
 
@@ -32,17 +32,20 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right;}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left;}
 
-/* ===== 빠른 답변(칩) - 한 줄 5개 ===== */
-.quick-title{ font-size:15px; margin:4px 0 6px 2px; color:#fff; font-weight:700; } /* ⬅ 간격 줄임 */
+/* 타이틀 */
+.quick-title{ font-size:15px; margin:4px 0 6px 2px; color:#fff; font-weight:700; }
 
-.quick-row { margin: 0 12px 10px 12px; }  /* 전체 좌우 살짝 붙이고 아래 여백 */
+/* 두 줄 컨테이너/열 간격 */
+.quick-row { margin: 0 10px 8px 10px; }          /* 줄 간 아래 여백 8px */
+.quick-col { padding: 0 5px; }                   /* 버튼 사이 간격(좌우 10px 효과) */
 
+/* 버튼 pill */
 .quick-col .stButton > button{
   width:100%;
   background:#FFFFFF !important;
   color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
-  border-radius:100px !important;          /* ⬅ 더 동그랗게 */
+  border-radius:100px !important;                /* 더 동그랗게 */
   padding:10px 0 !important;
   font-size:14px !important; font-weight:800 !important;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
@@ -50,10 +53,8 @@ st.markdown("""
   transition: background-color .2s ease, transform .06s ease;
 }
 .quick-col .stButton > button:hover{ background:#F5F1FF !important; }
-.quick-col { padding-right:10px; }         /* 간격 느낌 10px */
-.quick-col:last-child { padding-right:0; }
 
-/* ===== 입력창 ===== */
+/* 입력창 */
 [data-testid="stChatInput"] {
   background-color:#F5F1FF !important;
   border-radius:999px !important;
@@ -85,7 +86,7 @@ with right:
 # ----------------- 카드 시작 -----------------
 st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
-# ----------------- 시스템 / 세션 초기화 -----------------
+# ----------------- 시스템/세션 -----------------
 SYSTEM_MSG = '''
 #지침: 너는 ui/ux 기획, 디자인, 리서처 업무를 도와주는 이름은 말감이야.
 너는 피그마나 디자인, ai 관련한 질문을 받아주고 고민 상담도 들어줘
@@ -101,7 +102,7 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- OpenAI 응답 함수 (출력은 루프에서만) -----------------
+# ----------------- 응답 함수 (추가만, 렌더는 루프에서) -----------------
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
     stream = client.chat.completions.create(
@@ -114,26 +115,38 @@ def send_and_stream(user_text: str):
         assistant_text += chunk.choices[0].delta.content or ""
     st.session_state.messages.append({"role":"assistant","content":assistant_text})
 
-# ----------------- 빠른 답변(한 줄 5개, 클릭 즉시 전송) -----------------
+# ----------------- 빠른 답변: 9개 → 5개/4개 두 줄 -----------------
 st.markdown('<p class="quick-title">아래 키워드로 물어볼 수도 있겠감</p>', unsafe_allow_html=True)
 
-quick_items = ["AI 기획서 작성", "툴 추천", "아이디어 확장", "AI 리서치", "피그마 사용법"]
+quick_items = [
+    "AI 기획서 작성", "툴 추천", "아이디어 확장",
+    "AI 리서치", "피그마 사용법",
+    "노션 사용법", "프로토타입 팁",
+    "UX 리서치 설계", "프롬프트 가이드"
+]
 
-cols = st.columns(5)
-for i, label in enumerate(quick_items):
-    with cols[i]:
-        st.markdown('<div class="quick-col">', unsafe_allow_html=True)
-        if st.button(label, key=f"quick_{i}", help="클릭하면 바로 전송돼요"):
-            send_and_stream(label)
-            st.rerun()             # 중복 출력 없이 즉시 반영
-        st.markdown('</div>', unsafe_allow_html=True)
+def render_quick_row(items, row_idx: int):
+    st.markdown('<div class="quick-row">', unsafe_allow_html=True)
+    cols = st.columns(len(items))
+    for i, label in enumerate(items):
+        with cols[i]:
+            st.markdown('<div class="quick-col">', unsafe_allow_html=True)
+            if st.button(label, key=f"quick_{row_idx}_{i}", help="클릭하면 바로 전송돼요"):
+                send_and_stream(label)
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# 1줄(5개) + 2줄(4개)
+render_quick_row(quick_items[:5], 0)
+render_quick_row(quick_items[5:], 1)
 
 # ----------------- 인사 말풍선 (버튼 아래 1회) -----------------
 if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
 
-# ----------------- 대화 렌더(여기서만 출력) -----------------
+# ----------------- 대화 렌더 (여기서만 출력) -----------------
 for msg in st.session_state.messages:
     if msg["role"] == "system":
         continue

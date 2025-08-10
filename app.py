@@ -10,20 +10,8 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 KST = timezone(timedelta(hours=9))
 
-# ----------------- 로고(Base64 인라인) -----------------
-def logo_tag(path="logo.png"):
-    p = Path(path)
-    if not p.exists():
-        for c in [Path("static")/path, Path("assets")/path, Path("app/static")/path]:
-            if c.exists(): p = c; break
-    if not p.exists():
-        return '<span class="logo-missing"></span>'
-    data = base64.b64encode(p.read_bytes()).decode()
-    ext = (p.suffix[1:] or "png")
-    return f'<img src="data:image/{ext};base64,{data}" alt="logo" />'
-
-# ----------------- 아바타(Base64 인라인) -----------------
-def avatar_tag(path, size=36, alt="avatar"):
+# ----------------- 인라인 이미지 태그 -----------------
+def inline_img_tag(path, alt="img", style=""):
     p = Path(path)
     if not p.exists():
         for c in [Path("static")/path, Path("assets")/path, Path("app/static")/path]:
@@ -32,7 +20,13 @@ def avatar_tag(path, size=36, alt="avatar"):
         return ""
     data = base64.b64encode(p.read_bytes()).decode()
     ext = (p.suffix[1:] or "png")
-    return f'<img src="data:image/{ext};base64,{data}" alt="{alt}" style="width:{size}px;height:{size}px;border-radius:50%;object-fit:cover" />'
+    return f'<img src="data:image/{ext};base64,{data}" alt="{alt}" style="{style}"/>'
+
+def logo_tag(path="logo.png"):
+    return inline_img_tag(path, "logo", "height:40px;max-width:120px;width:auto;object-fit:contain;")
+
+def avatar_tag(path, size=36, alt="avatar"):
+    return inline_img_tag(path, alt, f"width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;")
 
 # ----------------- 시간 포맷 -----------------
 def ts_now_utc():
@@ -44,8 +38,7 @@ def ts_hhmm_kst(ts_iso):
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         kst = dt.astimezone(KST)
-        # 12:55 PM 형태
-        return kst.strftime("%I:%M %p").lstrip("0")
+        return kst.strftime("%I:%M %p").lstrip("0")  # ex) 9:59 PM
     except Exception:
         return ""
 
@@ -57,14 +50,13 @@ st.markdown("""
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
 .block-container{padding-top:0!important}
 
-/* 상단 바 (로고 + 타이틀) */
+/* 상단 바 */
 .topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 8px}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
-.topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
 @media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
 
 /* 카드 */
-.chat-card{background:#fff0;border-radius:24px;padding:8px 12px;margin:8px 12px 20px}
+.chat-card{background:transparent;border-radius:24px;padding:8px 12px;margin:8px 12px 20px}
 
 /* 행 레이아웃 */
 .chat-row{display:flex;gap:10px;align-items:flex-start;margin:12px 0}
@@ -72,21 +64,19 @@ st.markdown("""
 .chat-row.right{flex-direction:row-reverse}
 .chat-wrap{max-width:78%}
 
-/* 이름(상단) — 흰색, 조금 크게 */
-.chat-meta{font-size:14px;color:#FFFFFF;margin:0 4px 6px 4px;font-weight:700}
+/* 이름(상단) — 흰색, 크게 */
+.chat-meta{font-size:16px;color:#FFFFFF;margin:0 4px 6px 4px;font-weight:800}
 
 /* 말풍선 */
 .chat-bubble{display:block;max-width:100%;padding:14px 18px;border-radius:20px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .user-bubble{background:#DCF8C6;}
 .assistant-bubble{background:#F1F0F0;}
 
-/* 말풍선 하단 시간(숫자) */
-.chat-footer{font-size:12px;color:#EDE7FF;margin:6px 6px 0 6px}
-.chat-row.left .chat-footer{ text-align:left; }
-.chat-row.right .chat-footer{ text-align:right; }
+/* 말풍선 하단 시간 — 항상 오른쪽 정렬 */
+.chat-footer{font-size:12px;color:#EDE7FF;margin:6px 8px 0 8px;text-align:right}
 
-/* ===== 퀵칩 버튼 ===== */
-.quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
+/* 퀵칩 */
+.quick-title{color:#fff;font-weight:800;margin:16px 0 10px 16px;font-size:20px}
 .stButton > button {
   background:#fff !important; color:#1F55A4 !important; border:1px solid #7B2BFF !important;
   border-radius:100px !important; padding:8px 10px !important; font-weight:800 !important; 
@@ -98,11 +88,10 @@ st.markdown("""
 .stButton > button:hover{ background:#F5F1FF !important; }
 .stButton > button:active{ transform:scale(.98) !important; }
 
-/* 스피너(흰색) */
+/* 스피너/입력창 */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
-/* 입력창 */
 [data-testid="stChatInput"]{background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
@@ -126,9 +115,8 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 응답 함수 -----------------
+# ----------------- API 호출/스트리밍 -----------------
 def send_and_stream(user_text: str):
-    # 사용자 메시지 (UTC 저장)
     st.session_state.messages.append(
         {"role":"user","content":user_text,"name":"나","ts":ts_now_utc()}
     )
@@ -148,16 +136,43 @@ def send_and_stream(user_text: str):
             {"role":"assistant","content":assistant,"name":"말감","ts":ts_now_utc()}
         )
 
-# ----------------- 환영 메시지 -----------------
+# ----------------- 환영 메시지(대화에 먼저 렌더) -----------------
 if not st.session_state.welcome_shown:
     st.session_state.messages.append(
         {"role":"assistant","content":WELCOME,"name":"말감","ts":ts_now_utc()}
     )
     st.session_state.welcome_shown = True
 
-# ----------------- 퀵칩 -----------------
+# ----------------- 대화 렌더 (위쪽) -----------------
+ASSISTANT_AVATAR = "user.png"   # 말감만 이미지 사용
+for m in st.session_state.messages:
+    if m["role"] == "system":
+        continue
+    is_user = (m["role"] == "user")
+    side = "right" if is_user else "left"
+    bubble_cls = "user-bubble" if is_user else "assistant-bubble"
+    name = m.get("name", "나" if is_user else "말감")
+    time_txt = ts_hhmm_kst(m.get("ts",""))
+    ava_html = avatar_tag(ASSISTANT_AVATAR, size=36, alt="말감") if not is_user else '<div style="width:36px;height:36px"></div>'
+
+    st.markdown(
+        f'''
+<div class="chat-row {side}">
+  <div class="avatar">{ava_html}</div>
+  <div class="chat-wrap">
+    <div class="chat-meta">{name}</div>
+    <div class="{bubble_cls} chat-bubble">{m["content"]}</div>
+    <div class="chat-footer">{time_txt}</div>
+  </div>
+</div>
+''', unsafe_allow_html=True)
+
+# ----------------- 퀵칩 (아래) -----------------
 st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
-chip_data = ["👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천","💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"]
+chip_data = [
+    "👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천",
+    "💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"
+]
 col1,col2,col3 = st.columns(3)
 with col1:
     if st.button(chip_data[0], key="chip_0", use_container_width=True):
@@ -178,32 +193,6 @@ with col5:
 with col6:
     if st.button(chip_data[5], key="chip_5", use_container_width=True):
         send_and_stream(chip_data[5]); st.rerun()
-
-# ----------------- 대화 렌더 -----------------
-ASSISTANT_AVATAR = "user.png"  # 말감만 이미지 사용
-for m in st.session_state.messages:
-    if m["role"] == "system": 
-        continue
-    is_user = (m["role"] == "user")
-    side = "right" if is_user else "left"
-    bubble_cls = "user-bubble" if is_user else "assistant-bubble"
-    name = m.get("name", "나" if is_user else "말감")
-    time_txt = ts_hhmm_kst(m.get("ts",""))
-
-    # 말감만 아바타, 사용자는 빈 공간으로 정렬 유지
-    ava_html = avatar_tag(ASSISTANT_AVATAR, size=36, alt="말감") if not is_user else '<div style="width:36px;height:36px"></div>'
-
-    st.markdown(
-        f'''
-<div class="chat-row {side}">
-  <div class="avatar">{ava_html}</div>
-  <div class="chat-wrap">
-    <div class="chat-meta">{name}</div>
-    <div class="{bubble_cls} chat-bubble">{m["content"]}</div>
-    <div class="chat-footer">{time_txt}</div>
-  </div>
-</div>
-''', unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
 if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):

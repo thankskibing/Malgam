@@ -144,7 +144,7 @@ for m in st.session_state.messages:
     st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
-if txt := st.chat_input("말감이 준비 완료! 궁금한 건 뭐든 물어보라감!🥔"):
+if txt := st.chat_input("말감이가 기다리는 중!🥔"):
     send_and_stream(txt)
 
 # ----------------- 카드 종료 -----------------

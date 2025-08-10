@@ -49,7 +49,7 @@ st.markdown("""
 /* 버튼을 칩처럼(Pill) + 동일 사이즈 강제 */
 :root{
   --chip-h: 42px;   /* 버튼 높이 */
-  --chip-gap: 8px;  /* 버튼 사이 간격 */
+  --chip-gap: 6px;  /* 버튼 사이 간격 */
 }
 .chip-btn .stButton>button{
   display:flex; align-items:center; justify-content:center;
@@ -120,6 +120,67 @@ div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColu
     max-width:calc((100% - (var(--chip-gap) * 2))/3) !important;
     min-width:0 !important;
   }
+}
+/* =========================================================
+   🔧 Quick Chips 최종 보정: 크기/간격/둥근모서리/줄바꿈 완전 통일
+   ========================================================= */
+
+/* 버튼 높이/간격 변수 */
+:root{ --chip-h: 40px; --chip-gap: 6px; }
+
+/* chip-row 자체 여백 줄이기 */
+.chip-row{ margin: 0 10px var(--chip-gap) 10px !important; }
+
+/* st.columns 래퍼 여백/패딩 제거 (세로 간격 커지는 주범) */
+.chip-row .stVerticalBlock,
+.chip-row .stVerticalBlock > div,
+.chip-row .stElementContainer.element-container{
+  margin:0 !important;
+  padding:0 !important;
+}
+
+/* 3열 레이아웃의 가로/세로 gap 통일 */
+div[data-testid="stHorizontalBlock"].stHorizontalBlock{
+  gap: var(--chip-gap) !important;
+}
+
+/* 버튼 자신을 pill + 고정 높이 + 중앙정렬 + 한 줄 고정 */
+.chip-btn .stButton > button{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  height: var(--chip-h) !important;
+  line-height: var(--chip-h) !important;     /* 텍스트 수직정렬 보조 */
+  padding: 0 12px !important;
+  border-radius: 9999px !important;          /* 진짜 pill */
+  background:#fff !important;
+  color:#1F55A4 !important;
+  border:1px solid #7B2BFF !important;
+  font-weight:800 !important;
+  font-size:12px !important;
+  box-shadow:0 2px 6px rgba(0,0,0,.08) !important;
+
+  /* 줄바꿈/쪼개짐 방지(한글 포함) */
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* 버튼 내부 모든 요소에도 줄바꿈 방지 강제 */
+.chip-btn .stButton > button *,
+.chip-btn .stButton > button span{
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* 모바일 640 이하에서도 동일 보정 */
+@media (max-width:640px){
+  .chip-row{ margin: 0 8px var(--chip-gap) 8px !important; }
+  .chip-btn .stButton > button{ font-size:11px !important; }
 }
 </style>
 """, unsafe_allow_html=True)

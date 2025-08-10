@@ -1,10 +1,26 @@
 from openai import OpenAI
 import streamlit as st
 from urllib.parse import quote, unquote
+from pathlib import Path
+import base64
 
 # ----------------- 기본 -----------------
 st.set_page_config(page_title="말감 챗봇", page_icon="🥔", layout="centered")
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+# ----------------- 로고(Base64 인라인) -----------------
+def logo_tag(path="logo.png"):
+    p = Path(path)
+    if not p.exists():
+        for c in [Path("static")/path, Path("assets")/path, Path("app/static")/path]:
+            if c.exists():
+                p = c
+                break
+    if not p.exists():
+        return '<span class="logo-missing"></span>'
+    data = base64.b64encode(p.read_bytes()).decode()
+    ext = (p.suffix[1:] or "png")
+    return f'<img src="data:image/{ext};base64,{data}" alt="logo" />'
 
 # ----------------- 스타일 -----------------
 st.markdown("""
@@ -17,16 +33,8 @@ st.markdown("""
 /* 상단 바 (로고 + 타이틀) */
 .topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 8px}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
-
-/* ✅ 로고 고정 사이즈 + 반응형 */
-.topbar img{
-  height:40px;            /* 기본 높이 */
-  max-width:120px;        /* 가로 최대 */
-  width:auto; object-fit:contain;
-}
-@media (max-width: 480px){
-  .topbar img{ height:28px; max-width:90px; }
-}
+.topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
+@media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
 
 /* 카드 */
 .chat-card{background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.12);padding:16px 16px 8px;margin:8px 12px 20px}
@@ -48,8 +56,11 @@ st.markdown("""
 .chip a{
   flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center;
   text-decoration:none; background:#fff; color:#1F55A4; border:1px solid #7B2BFF;
-  border-radius:100px; padding:10px 12px; font-weight:800; font-size:14px;
+  border-radius:100px; padding:8px 10px;            /* ⬅ 패딩 소폭 축소 */
+  font-weight:800; font-size:12px;                  /* ⬅ 12px로 축소 */
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;  /* 줄바꿈 방지 */
   box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
+  cursor:pointer;
 }
 .chip a:hover{background:#F5F1FF}
 .chip a:active{transform:scale(.98)}
@@ -68,7 +79,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------- 상단 바 -----------------
-st.markdown('<div class="topbar"><img src="logo.png" alt="logo"/><h1>말감 챗봇</h1></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="topbar">{logo_tag("logo.png")}<h1>말감 챗봇</h1></div>', unsafe_allow_html=True)
 
 # ----------------- 카드 시작 -----------------
 st.markdown('<div class="chat-card">', unsafe_allow_html=True)
@@ -86,7 +97,7 @@ if "welcome_shown" not in st.session_state:
 # ----------------- 응답 함수 (흰색 스피너, 출력은 루프에서만) -----------------
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
-    with st.spinner("말감이 생각 중…"):
+    with st.spinner("🥔💭말감이 생각 중…"):
         stream = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=st.session_state.messages,
@@ -133,7 +144,7 @@ for m in st.session_state.messages:
     st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
-if txt := st.chat_input("말감이에게 궁금한걸 말해보세요!"):
+if txt := st.chat_input("말감이 준비 완료! 궁금한 건 뭐든 물어보라감!🥔"):
     send_and_stream(txt)
 
 # ----------------- 카드 종료 -----------------

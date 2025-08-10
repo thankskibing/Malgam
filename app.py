@@ -32,28 +32,29 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right;}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left;}
 
-/* ===== 빠른 답변(칩) 영역 ===== */
+/* ===== 빠른 답변(칩) - 한 줄 고정 5등분 ===== */
 .quick-title{ font-size:15px; margin:4px 0 10px 2px; color:#fff; font-weight:700; }
 
-/* 칩 컨테이너: 가로 정렬, 간격 10px, 필요 시 줄바꿈 */
+/* 한 줄, 줄바꿈 없음, 칩 사이 gap 10px */
 .quick-row{
-  display:flex; flex-wrap:wrap; gap:10px;           /* 🔥 칩 간격 10px */
-  padding:4px 16px 14px;                             /* 아래 여백으로 말풍선과 간격 */
+  display:flex; flex-wrap:nowrap; gap:10px; padding:4px 16px 14px;
 }
-
-/* st.button이 폭을 잡아먹지 않도록 */
-.quick-row .stButton{ width:auto; margin:0; }
-
-/* 칩 버튼(흰 배경 + 보라 테두리/글씨, pill) */
+/* 각 st.button 컨테이너를 동일 폭으로 */
+.quick-row .stButton{
+  flex:1 1 0;            /* 균등 분배 */
+  min-width:0;           /* 넘침 방지 */
+  margin:0;
+}
+/* 칩 버튼 스타일 (폭 100%) */
 .quick-row .stButton > button{
-  display:inline-flex; align-items:center; gap:6px;
-  width:auto;
+  width:100%;
   background:#FFFFFF !important;
-  color:#1F55A4 !important;                /* 가독성 좋은 딥블루 글씨 */
+  color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
   border-radius:999px !important;
-  padding:8px 14px !important;
-  font-size:14px !important; font-weight:800 !important;
+  padding:10px 0 !important;                 /* 좌우 여백 최소화로 텍스트 공간 확보 */
+  font-size:clamp(12px, 2.6vw, 14px) !important;  /* 화면폭에 맞춰 살짝 축소 */
+  font-weight:800 !important;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
   text-shadow:none !important;
   transition: background-color .2s ease, transform .06s ease;
@@ -119,18 +120,7 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 빠른 답변(5개) -----------------
-st.markdown('<p class="quick-title">아래 키워드로 물어볼 수도 있겠감</p>', unsafe_allow_html=True)
-
-quick_items = [
-    "AI 기획서 작성",
-    "툴 추천",
-    "아이디어 확장",
-    "AI 리서치",
-    "피그마 사용법",
-]  # 👉 여기 5개만 노출
-
-# 공통 전송 함수
+# ----------------- 공통 전송 함수 -----------------
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
     st.markdown(f'<div class="chat-bubble user-bubble">{user_text}</div>', unsafe_allow_html=True)
@@ -146,12 +136,15 @@ def send_and_stream(user_text: str):
     st.markdown(f'<div class="chat-bubble assistant-bubble">{assistant_text}</div>', unsafe_allow_html=True)
     st.session_state.messages.append({"role":"assistant","content":assistant_text})
 
-# 칩 버튼 한 줄 표시 + 클릭 즉시 전송
+# ----------------- 빠른 답변(한 줄 5개, 클릭 즉시 전송) -----------------
+st.markdown('<p class="quick-title">아래 키워드로 물어볼 수도 있겠감</p>', unsafe_allow_html=True)
+
+quick_items = ["AI 기획서 작성", "툴 추천", "아이디어 확장", "AI 리서치", "피그마 사용법"]  # 정확히 5개
+
 st.markdown('<div class="quick-row">', unsafe_allow_html=True)
 for i, label in enumerate(quick_items):
     if st.button(label, key=f"quick_{i}", help="클릭하면 바로 전송돼요"):
-        # 즉시 전송
-        send_and_stream(label)
+        send_and_stream(label)  # ✅ 즉시 전송
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------- 인사 말풍선 (버튼 아래 1회) -----------------

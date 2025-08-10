@@ -7,7 +7,7 @@ import base64
 st.set_page_config(page_title="말감 챗봇", page_icon="🥔", layout="centered")
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# ----------------- 로고(Base64 인라인) -----------------
+# ----------------- 로고(Base64) -----------------
 def logo_tag(path="logo.png"):
     p = Path(path)
     if not p.exists():
@@ -33,8 +33,7 @@ st.markdown("""
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
 .topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
 @media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
-
-.top-accent{height:2px;margin:6px 16px 10px 16px;background:rgba(255,255,255,.9);border-radius:999px;}
+.top-accent{height:2px;margin:6px 16px 10px;background:rgba(255,255,255,.9);border-radius:999px;}
 
 /* 카드 */
 .chat-card{
@@ -47,71 +46,71 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵칩(버튼) : 전 해상도 3×3, 간격 10px ===== */
+/* ===== 퀵칩: 버튼 3×3 강제 ===== */
 .quick-title{color:#fff;font-weight:700;margin:8px 0 6px 16px}
-.chips-wrap{margin:0 16px 16px 16px}
-.quick-row{ margin-bottom:10px; }
-
-/* 3열 강제(모바일에서도) + 열 간격 10px */
-.quick-row [data-testid="stHorizontalBlock"]{ gap:10px !important; }
-.quick-row [data-testid="column"]{
-  padding:0 !important;
-  flex:0 0 calc((100% - 20px)/3) !important;
-  max-width:calc((100% - 20px)/3) !important;
+.chips-wrap{margin:0 16px 16px}
+.quick-row{margin-bottom:10px;}
+/* 🔒 Streamlit의 모바일 1열 변환을 무력화 */
+.quick-row [data-testid="stHorizontalBlock"]{
+  display:flex!important; flex-wrap:nowrap!important; gap:10px!important;
+}
+.quick-row [data-testid="stHorizontalBlock"] > div,          /* st.columns 내부 div */
+.quick-row [data-testid="column"]{                            /* 호환용 */
+  padding:0!important;
+  flex:0 0 calc((100% - 20px)/3)!important;  /* 3열 고정 (gap 10px*2) */
+  max-width:calc((100% - 20px)/3)!important;
 }
 
 /* 칩 버튼 (아이콘+텍스트 여유 있게) */
 .quick-btn .stButton>button{
   width:100%; border-radius:100px;
   padding:10px 14px;
-  font-size:clamp(12px, 3.5vw, 13px);
-  font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  background:#fff !important; color:#1F55A4 !important; border:1px solid #7B2BFF !important;
-  box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
+  font-size:clamp(12px,3.5vw,13px); font-weight:800;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:#fff!important; color:#1F55A4!important; border:1px solid #7B2BFF!important;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  transition:background-color .2s, transform .06s;
 }
-.quick-btn .stButton>button:hover{ background:#F5F1FF !important; }
-.quick-btn .stButton>button:active{ transform:scale(.98); }
+.quick-btn .stButton>button:hover{background:#F5F1FF!important;}
+.quick-btn .stButton>button:active{transform:scale(.98);}
 
 /* 스피너 흰색 */
-[data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
-[data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
-[data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
+[data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF!important;}
+[data-testid="stSpinner"] svg circle{stroke:#FFFFFF!important;}
+[data-testid="stSpinner"] svg path{stroke:#FFFFFF!important; fill:#FFFFFF!important;}
 
-/* ===== 입력창: 보라색 말풍선(그라데이션)로 고정 =====
-   - 내부 모든 레이어 흰 배경 제거
-   - 둥근 모서리 + 그림자 + 테두리
-*/
+/* ===== 입력창: 흰 배경 완전 제거 + 보라 말풍선(그라데이션) ===== */
 [data-testid="stChatInput"]{
-  background:linear-gradient(135deg,#8A39FF 0%, #7B2BFF 60%, #6C22FF 100%) !important;
-  border:1px solid rgba(255,255,255,.45) !important;
-  border-radius:999px !important;
-  box-shadow:0 8px 24px rgba(123,43,255,.35) !important;
-  margin:10px 16px 12px 16px !important;
-  padding:8px 12px !important;
+  background:linear-gradient(135deg,#8A39FF 0%, #7B2BFF 60%, #6C22FF 100%)!important;
+  border:1px solid rgba(255,255,255,.45)!important;
+  border-radius:999px!important;
+  box-shadow:0 8px 24px rgba(123,43,255,.35)!important;
+  margin:12px 16px 14px!important;
+  padding:8px 12px!important;
+  position:relative; z-index:1;
 }
+/* 내부 래퍼 전부 투명화 (버전별 레이어 대응) */
 [data-testid="stChatInput"] > div,
 [data-testid="stChatInput"] > div *:not(button):not(svg):not(path){
-  background:transparent !important;
-  border:none !important;
-  box-shadow:none !important;
-  border-radius:0 !important;
+  background:transparent!important; border:none!important; box-shadow:none!important; border-radius:0!important;
 }
+/* 혹시 상단에 중복 생성되면 첫 번째 것은 숨김 */
+[data-testid="stChatInput"]:not(:last-of-type){display:none!important;}
+
 [data-testid="stChatInput"]:focus-within{
-  border:2px solid rgba(255,255,255,.9) !important;
-  box-shadow:0 10px 28px rgba(123,43,255,.45) !important;
+  border:2px solid rgba(255,255,255,.9)!important;
+  box-shadow:0 10px 28px rgba(123,43,255,.45)!important;
 }
 [data-testid="stChatInput"] textarea,
 [data-testid="stChatInput"] input,
 [data-testid="stChatInput"] div[contenteditable="true"],
 [data-testid="stChatInput"] div[role="textbox"]{
-  background:transparent !important; border:none !important; outline:none !important; box-shadow:none !important;
-  color:#1B1B1B !important; font-size:16px !important;
+  background:transparent!important; border:none!important; outline:none!important; box-shadow:none!important;
+  color:#1B1B1B!important; font-size:16px!important;
 }
-[data-testid="stChatInput"] ::placeholder{ color:rgba(27,27,27,.55) !important; }
-
-/* 전송 버튼은 흰색 아이콘로 */
-[data-testid="stChatInput"] button{ background:transparent !important; }
-[data-testid="stChatInput"] button svg path{ fill:#FFFFFF !important; }
+[data-testid="stChatInput"] ::placeholder{ color:rgba(27,27,27,.55)!important; }
+[data-testid="stChatInput"] button{ background:transparent!important; }
+[data-testid="stChatInput"] button svg path{ fill:#FFFFFF!important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -124,7 +123,7 @@ st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
 # ----------------- 세션 -----------------
 SYSTEM = """#지침: 너는 ui/ux 기획, 디자인, 리서처 업무를 도와주는 말감이야.
-친근하게 답하고 마지막에 '요'로 끝맺음, 답변에 맞는 이모지 추가. 영어 질문도 한글로 답변."""
+말끝은 '감'으로, 친근하게 답하고 마지막에 맞는 이모지 추가. 영어 질문도 한글로 답변."""
 WELCOME = "안녕하세요! 저는 여러분을 도와줄 ‘말하는 감자 말감이’예요. 궁금한 점이나 고민이 있다면 자유롭게 물어보라감!😊"
 
 if "messages" not in st.session_state:
@@ -146,12 +145,12 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ========= 1) 환영 말풍선 먼저 =========
+# 1) 환영 말풍선
 if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
 
-# ========= 2) 키워드 칩(3×3, 버튼 기반) =========
+# 2) 퀵버튼 (버튼 방식, 3×3 고정)
 st.markdown('<div class="quick-title">🥔아래 키워드 눌러서 물어보라감🥔</div>', unsafe_allow_html=True)
 
 chips = [
@@ -162,25 +161,25 @@ chips = [
 
 for start in range(0, len(chips), 3):
     st.markdown('<div class="chips-wrap"><div class="quick-row">', unsafe_allow_html=True)
-    cols = st.columns(3)  # CSS가 3열로 강제
+    cols = st.columns(3)  # CSS로 3열 강제
     for col, label in zip(cols, chips[start:start+3]):
         with col:
             st.markdown('<div class="quick-btn">', unsafe_allow_html=True)
             if st.button(label, key=f"chip_{start}_{label}", help="클릭하면 바로 전송돼요"):
-                send_and_stream(label)  # 리로드 없음
+                send_and_stream(label)   # 페이지 리로드 없음 → 번쩍임 X
             st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div></div>', unsafe_allow_html=True)
 
-# ========= 3) 대화 렌더 =========
+# 3) 대화 렌더
 for m in st.session_state.messages:
     if m["role"] == "system":
         continue
     klass = "user-bubble" if m["role"] == "user" else "assistant-bubble"
     st.markdown(f'<div class="{klass} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
-# ========= 4) 입력창 =========
+# 4) 입력창
 if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):
     send_and_stream(txt)
 
-# ----------------- 카드 종료 -----------------
+# 카드 종료
 st.markdown('</div>', unsafe_allow_html=True)

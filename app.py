@@ -32,30 +32,26 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right;}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left;}
 
-/* 빠른 답변 타이틀 */
-.quick-title{ font-size:15px; margin:4px 0 10px 2px; color:#fff; font-weight:700; }
+/* ===== 빠른 답변(칩) - 한 줄 5개 ===== */
+.quick-title{ font-size:15px; margin:4px 0 6px 2px; color:#fff; font-weight:700; } /* ⬅ 간격 줄임 */
 
-/* 버튼 간격 10px을 위해 열 사이 마진 */
-.quick-row { margin: 0 16px 14px 16px; }
-.quick-col { padding-right:10px; }
-.quick-col:last-child { padding-right:0; }
+.quick-row { margin: 0 12px 10px 12px; }  /* 전체 좌우 살짝 붙이고 아래 여백 */
 
-/* 칩 버튼 스타일 */
 .quick-col .stButton > button{
   width:100%;
   background:#FFFFFF !important;
   color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
-  border-radius:999px !important;
+  border-radius:100px !important;          /* ⬅ 더 동그랗게 */
   padding:10px 0 !important;
   font-size:14px !important; font-weight:800 !important;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
   text-shadow:none !important;
   transition: background-color .2s ease, transform .06s ease;
 }
-.quick-col .stButton > button:hover{
-  background:#F5F1FF !important;
-}
+.quick-col .stButton > button:hover{ background:#F5F1FF !important; }
+.quick-col { padding-right:10px; }         /* 간격 느낌 10px */
+.quick-col:last-child { padding-right:0; }
 
 /* ===== 입력창 ===== */
 [data-testid="stChatInput"] {
@@ -105,12 +101,9 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- OpenAI 응답 함수 (출력은 루프에서만!) -----------------
+# ----------------- OpenAI 응답 함수 (출력은 루프에서만) -----------------
 def send_and_stream(user_text: str):
-    # 1) 유저 메시지 추가
     st.session_state.messages.append({"role":"user","content":user_text})
-
-    # 2) 모델 호출해서 전체 텍스트 획득
     stream = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=st.session_state.messages,
@@ -119,13 +112,10 @@ def send_and_stream(user_text: str):
     assistant_text = ""
     for chunk in stream:
         assistant_text += chunk.choices[0].delta.content or ""
-
-    # 3) 어시스턴트 메시지만 추가 (여기서 화면에 출력하지 않음!)
     st.session_state.messages.append({"role":"assistant","content":assistant_text})
 
-# ----------------- 빠른 답변(한 줄 5개, 간격 10, 클릭 즉시 전송) -----------------
+# ----------------- 빠른 답변(한 줄 5개, 클릭 즉시 전송) -----------------
 st.markdown('<p class="quick-title">아래 키워드로 물어볼 수도 있겠감</p>', unsafe_allow_html=True)
-st.markdown('<div class="quick-row">', unsafe_allow_html=True)
 
 quick_items = ["AI 기획서 작성", "툴 추천", "아이디어 확장", "AI 리서치", "피그마 사용법"]
 
@@ -135,10 +125,8 @@ for i, label in enumerate(quick_items):
         st.markdown('<div class="quick-col">', unsafe_allow_html=True)
         if st.button(label, key=f"quick_{i}", help="클릭하면 바로 전송돼요"):
             send_and_stream(label)
-            st.rerun()  # ✅ 즉시 다시 그려 중복 출력 방지
+            st.rerun()             # 중복 출력 없이 즉시 반영
         st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------- 인사 말풍선 (버튼 아래 1회) -----------------
 if not st.session_state.welcome_shown:
@@ -153,10 +141,9 @@ for msg in st.session_state.messages:
     st.markdown(f'<div class="chat-bubble {klass}">{msg["content"]}</div>', unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
-prompt = st.chat_input("말감이에게 궁금한걸 말해보세요!")
-if prompt:
+if prompt := st.chat_input("말감이에게 궁금한걸 말해보세요!"):
     send_and_stream(prompt)
-    st.rerun()  # ✅ 중복 없이 새 메시지까지 포함해 다시 그리기
+    st.rerun()
 
 # ----------------- 카드 종료 -----------------
 st.markdown('</div>', unsafe_allow_html=True)

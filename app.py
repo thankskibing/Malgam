@@ -51,12 +51,22 @@ st.markdown("""
 .block-container{padding-top:0!important}
 
 /* 상단 바 */
-.topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 8px}
+.topbar{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 16px 4px; /* 하단 여백 줄임 */
+}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
 @media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
 
 /* 카드 */
-.chat-card{background:transparent;border-radius:24px;padding:8px 12px;margin:8px 12px 20px}
+.chat-card{
+    background:transparent;
+    border-radius:24px;
+    padding:8px 12px;
+    margin:0px 12px 20px; /* 상단 간격 0px */
+}
 
 /* 행 레이아웃 */
 .chat-row{display:flex;gap:10px;align-items:flex-start;margin:12px 0}
@@ -136,15 +146,15 @@ def send_and_stream(user_text: str):
             {"role":"assistant","content":assistant,"name":"말감","ts":ts_now_utc()}
         )
 
-# ----------------- 환영 메시지(대화에 먼저 렌더) -----------------
+# ----------------- 환영 메시지 -----------------
 if not st.session_state.welcome_shown:
     st.session_state.messages.append(
         {"role":"assistant","content":WELCOME,"name":"말감","ts":ts_now_utc()}
     )
     st.session_state.welcome_shown = True
 
-# ----------------- 대화 렌더 (위쪽) -----------------
-ASSISTANT_AVATAR = "user.png"   # 말감만 이미지 사용
+# ----------------- 대화 렌더 -----------------
+ASSISTANT_AVATAR = "user.png"
 for m in st.session_state.messages:
     if m["role"] == "system":
         continue
@@ -154,7 +164,6 @@ for m in st.session_state.messages:
     name = m.get("name", "나" if is_user else "말감")
     time_txt = ts_hhmm_kst(m.get("ts",""))
     ava_html = avatar_tag(ASSISTANT_AVATAR, size=36, alt="말감") if not is_user else '<div style="width:36px;height:36px"></div>'
-
     st.markdown(
         f'''
 <div class="chat-row {side}">
@@ -167,12 +176,9 @@ for m in st.session_state.messages:
 </div>
 ''', unsafe_allow_html=True)
 
-# ----------------- 퀵칩 (아래) -----------------
+# ----------------- 퀵칩 -----------------
 st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
-chip_data = [
-    "👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천",
-    "💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"
-]
+chip_data = ["👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천","💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"]
 col1,col2,col3 = st.columns(3)
 with col1:
     if st.button(chip_data[0], key="chip_0", use_container_width=True):

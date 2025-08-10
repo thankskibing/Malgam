@@ -43,29 +43,8 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵칩: 강제 3열 그리드 ===== */
+/* ===== 퀵칩 버튼 스타일링 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
-
-/* 버튼 컨테이너 그리드 */
-.main .block-container .element-container:has(.stButton) {
-  display: contents !important;
-}
-
-/* 연속된 9개의 버튼을 그리드로 배치 */
-.stButton:nth-of-type(1),
-.stButton:nth-of-type(2),
-.stButton:nth-of-type(3),
-.stButton:nth-of-type(4),
-.stButton:nth-of-type(5),
-.stButton:nth-of-type(6),
-.stButton:nth-of-type(7),
-.stButton:nth-of-type(8),
-.stButton:nth-of-type(9) {
-  display: inline-block !important;
-  width: calc(33.33% - 7px) !important;
-  margin: 3px !important;
-  vertical-align: top !important;
-}
 
 .stButton > button {
   background:#fff !important; 
@@ -83,6 +62,7 @@ st.markdown("""
   cursor:pointer !important;
   width: 100% !important;
   height: auto !important;
+  min-height: 40px !important;
 }
 
 .stButton > button:hover{
@@ -137,7 +117,7 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (3 × 3) - 강제 인라인 방식 -----------------
+# ----------------- 퀵칩 (3 × 3) - 확실한 컬럼 방식 -----------------
 st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
 
 chips = [
@@ -146,16 +126,50 @@ chips = [
     "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# 3x3 그리드를 위한 wrapper div
-st.markdown('<div style="padding: 0 16px;">', unsafe_allow_html=True)
-
-# 각 버튼을 개별적으로 생성 (인라인 배치를 위해)
-for i, chip in enumerate(chips):
-    if st.button(chip, key=f"chip_{i}"):
-        send_and_stream(chip)
+# 첫 번째 행
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button(chips[0], key="chip_0", use_container_width=True):
+        send_and_stream(chips[0])
+        st.rerun()
+with col2:
+    if st.button(chips[1], key="chip_1", use_container_width=True):
+        send_and_stream(chips[1])
+        st.rerun()
+with col3:
+    if st.button(chips[2], key="chip_2", use_container_width=True):
+        send_and_stream(chips[2])
         st.rerun()
 
-st.markdown("</div>", unsafe_allow_html=True)
+# 두 번째 행
+col4, col5, col6 = st.columns(3)
+with col4:
+    if st.button(chips[3], key="chip_3", use_container_width=True):
+        send_and_stream(chips[3])
+        st.rerun()
+with col5:
+    if st.button(chips[4], key="chip_4", use_container_width=True):
+        send_and_stream(chips[4])
+        st.rerun()
+with col6:
+    if st.button(chips[5], key="chip_5", use_container_width=True):
+        send_and_stream(chips[5])
+        st.rerun()
+
+# 세 번째 행
+col7, col8, col9 = st.columns(3)
+with col7:
+    if st.button(chips[6], key="chip_6", use_container_width=True):
+        send_and_stream(chips[6])
+        st.rerun()
+with col8:
+    if st.button(chips[7], key="chip_7", use_container_width=True):
+        send_and_stream(chips[7])
+        st.rerun()
+with col9:
+    if st.button(chips[8], key="chip_8", use_container_width=True):
+        send_and_stream(chips[8])
+        st.rerun()
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:

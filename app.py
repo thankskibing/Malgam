@@ -55,7 +55,7 @@ st.markdown("""
 .chip{
   display:flex !important;
 }
-.chip-btn{
+.chip-btn-display{
   flex:1 1 auto !important; 
   display:inline-flex !important; 
   align-items:center !important; 
@@ -75,21 +75,22 @@ st.markdown("""
   cursor:pointer !important;
   width: 100% !important;
 }
-.chip-btn:hover{
+.chip-btn-display:hover{
   background:#F5F1FF !important;
 }
-.chip-btn:active{
+.chip-btn-display:active{
   transform:scale(.98) !important;
 }
 
-/* 히든 input 숨기기 */
-input[data-testid*="chip_receiver"], 
-div[data-testid*="chip_receiver"] {
-  display: none !important;
+/* 히든 버튼 완전히 숨기기 */
+div[style*="position: absolute; left: -9999px"] {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
   visibility: hidden !important;
+  width: 0 !important;
   height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  overflow: hidden !important;
 }
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
@@ -148,8 +149,8 @@ chips = [
     "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# ----------------- 퀵칩 (3 × 3) - 간단한 HTML 버튼 -----------------
-st.markdown('<div class="quick-title">아래 키워드로 물어보겠감</div>', unsafe_allow_html=True)
+# ----------------- 퀵칩 (3 × 3) - Session State 방식 -----------------
+st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
 
 chips = [
     "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
@@ -157,7 +158,7 @@ chips = [
     "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# 간단한 HTML 버튼으로 구현
+# 순수 HTML로 버튼 렌더링 (클릭 이벤트는 form_submit_button으로 처리)
 chip_html = """
 <div class="chips-wrap">
     <div class="chip-grid">"""
@@ -165,32 +166,54 @@ chip_html = """
 for i, chip in enumerate(chips):
     chip_html += f"""
         <div class="chip">
-            <button class="chip-btn" onclick="document.getElementById('chip_value').value='{chip}'; document.getElementById('chip_value').dispatchEvent(new Event('input'));">
+            <div class="chip-btn-display">
                 {chip}
-            </button>
+            </div>
         </div>"""
 
 chip_html += """
     </div>
 </div>
-<input type="hidden" id="chip_value" />
 """
 
 st.markdown(chip_html, unsafe_allow_html=True)
 
-# 히든 값 받기 - 더 간단한 방법
-if "chip_clicked" not in st.session_state:
-    st.session_state.chip_clicked = ""
+# 숨겨진 Streamlit 버튼들로 실제 클릭 처리
+st.markdown('<div style="position: absolute; left: -9999px; top: -9999px;">', unsafe_allow_html=True)
 
-# JavaScript로 전달된 값 받기
-chip_value = st.text_input("", key="chip_receiver", label_visibility="collapsed", placeholder="")
+# 각 칩에 대응하는 숨겨진 버튼들
+for i, chip in enumerate(chips):
+    if st.button(f"hidden_{chip}", key=f"hidden_chip_{i}"):
+        st.session_state.selected_chip = chip
+        st.rerun()
 
-if chip_value and chip_value != st.session_state.chip_clicked:
-    st.session_state.selected_chip = chip_value
-    st.session_state.chip_clicked = chip_value
-    # 입력창 초기화
-    st.session_state.chip_receiver = ""
-    st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
+
+# JavaScript로 숨겨진 버튼 클릭 트리거
+click_script = """
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chipBtns = document.querySelectorAll('.chip-btn-display');
+    const hiddenBtns = document.querySelectorAll('button[data-testid*="baseButton"]');
+    
+    chipBtns.forEach((btn, index) => {
+        btn.addEventListener('click', function() {
+            // 해당하는 숨겨진 버튼 찾기
+            const targetText = 'hidden_' + btn.textContent;
+            const hiddenBtn = Array.from(hiddenBtns).find(hBtn => 
+                hBtn.textContent.includes(targetText) || 
+                hBtn.getAttribute('aria-label') === targetText
+            );
+            if (hiddenBtn) {
+                hiddenBtn.click();
+            }
+        });
+    });
+});
+</script>
+"""
+
+st.markdown(click_script, unsafe_allow_html=True)
 
 # 선택된 칩 처리
 if st.session_state.selected_chip:

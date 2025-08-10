@@ -23,12 +23,12 @@ def logo_tag(path="logo.png"):
 # ----------------- 스타일 -----------------
 st.markdown("""
 <style>
-/* 헤더 숨기기 + 배경 */
+/* 헤더/배경 */
 [data-testid="stHeader"]{display:none;}
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
 .block-container{padding-top:0!important}
 
-/* 상단 바 (로고 + 타이틀) */
+/* 상단 바 */
 .topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 8px}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
 .topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
@@ -42,66 +42,68 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵버튼: 항상 3열 고정 ===== */
+/* ===== 퀵버튼 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
 .chip-row { margin: 0 16px 10px 16px; }
 
-/* 기본(모든 해상도) – st.columns 영역을 grid 3칸으로 강제 */
-.chip-row [data-testid="stHorizontalBlock"]{
-  display:grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap:10px !important;
-  align-items:stretch !important;
-}
-.chip-row [data-testid="stHorizontalBlock"] > div,
-.chip-row [data-testid="column"]{
-  padding:0 !important;
-  width:auto !important;
-  flex:unset !important;
-  max-width:none !important;
-}
-
-/* 640px 이하에서도 동일하게 3칸 유지(일부 브라우저용 보강) */
-@media (max-width: 640px){
-  .chip-row [data-testid="stHorizontalBlock"]{
-    display:grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap:10px !important;
-  }
-  .chip-row [data-testid="stHorizontalBlock"] > div,
-  .chip-row [data-testid="column"]{
-    padding:0 !important; flex:unset !important; width:auto !important; max-width:none !important;
-  }
-}
-
-/* 버튼을 칩처럼 보이게 (pill, radius 100) */
+/* 버튼을 칩처럼 (pill) */
 .chip-btn .stButton>button{
-  width:100%;
-  height:40px;
-  border-radius:100px !important;
-  background:#fff !important;
-  color:#1F55A4 !important;
+  width:100%; height:40px;
+  border-radius:100px !important;       /* pill */
+  background:#fff !important; color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
   font-weight:800; font-size:12px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
-.chip-btn .stButton>button:hover,
-.chip-btn .stButton>button:focus{ background:#fff !important; }
+.chip-btn .stButton>button:hover, .chip-btn .stButton>button:focus{
+  background:#fff !important;
+}
 
-/* 스피너(말감이 생각 중…) 흰색 */
+/* 스피너 흰색 */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-/* 입력창(네가 쓰던 스타일 유지) */
+/* 입력창(네 설정 유지) */
 [data-testid="stChatInput"]{
   background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;
   box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important
 }
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
-[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
+[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{
+  border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important
+}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
+
+/* ───────────── 강제 3열 고정 (모든 해상도, 640px 이하 포함) ───────────── */
+/* Streamlit의 columns가 모바일에서 1열로 바뀌는 규칙을 덮어씀 */
+html body .block-container .chip-row [data-testid="stHorizontalBlock"]{
+  display:grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap:10px !important;
+  align-items:stretch !important;
+}
+html body .block-container .chip-row [data-testid="stHorizontalBlock"] > div,
+html body .block-container .chip-row [data-testid="column"]{
+  padding:0 !important;
+  width:auto !important;
+  min-width:0 !important;
+  flex:unset !important;
+  max-width:none !important;
+}
+@media (max-width: 640px){
+  html body .block-container .chip-row [data-testid="stHorizontalBlock"]{
+    display:grid !important;
+    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+    gap:10px !important;
+  }
+  html body .block-container .chip-row [data-testid="stHorizontalBlock"] > div,
+  html body .block-container .chip-row [data-testid="column"]{
+    padding:0 !important; width:auto !important; min-width:0 !important;
+    flex:unset !important; max-width:none !important;
+  }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -140,7 +142,7 @@ if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
 
-# ========= 2) 퀵버튼(3×3, 리로드 없음) =========
+# ========= 2) 퀵버튼 (항상 3×3, 리로드 없음) =========
 st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
@@ -150,7 +152,7 @@ chips = [
 ]
 
 for i in range(0, len(chips), 3):
-    st.markdown('<div class="chip-row">', unsafe_allow_html=True)   # 3열 고정 래퍼
+    st.markdown('<div class="chip-row">', unsafe_allow_html=True)  # 3열 강제 래퍼
     cols = st.columns(3, gap="small")
     for c, label in zip(cols, chips[i:i+3]):
         with c:

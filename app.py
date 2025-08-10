@@ -47,13 +47,29 @@ st.markdown("""
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
 .chips-wrap{margin:0 16px 18px 16px}
 .chip-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));  /* 항상 3열 유지 */
-  gap:10px;
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;  /* 항상 3열 유지 */
+  gap:10px !important;
+  width:100% !important;
 }
 .chip-item{
-  display:flex;
-  width:100%;
+  display:flex !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+/* Streamlit 기본 요소들 강제 오버라이드 */
+.chip-grid > div[data-testid="element-container"] {
+  display:flex !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+.chip-grid .element-container {
+  display:flex !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
 }
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
@@ -68,10 +84,12 @@ st.markdown("""
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 
 /* 퀵칩 버튼 스타일 */
-.chip-item .stButton {
+.chip-grid .stButton {
   width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
-.chip-item .stButton > button {
+.chip-grid .stButton > button {
   background:#fff !important; 
   color:#1F55A4 !important; 
   border:1px solid #7B2BFF !important;
@@ -87,12 +105,13 @@ st.markdown("""
   width: 100% !important;
   height: auto !important;
   min-height: auto !important;
+  margin: 0 !important;
 }
-.chip-item .stButton > button:hover {
+.chip-grid .stButton > button:hover {
   background:#F5F1FF !important;
   transform:scale(.98) !important;
 }
-.chip-item .stButton > button:focus {
+.chip-grid .stButton > button:focus {
   box-shadow: 0 0 8px rgba(123,43,255,.35) !important;
 }
 </style>
@@ -142,13 +161,11 @@ chips = [
 # CSS Grid 컨테이너 시작
 st.markdown('<div class="chips-wrap"><div class="chip-grid">', unsafe_allow_html=True)
 
-# 각 칩을 개별 div로 감싸서 그리드 아이템으로 만들기
+# 각 칩을 그리드 아이템으로 배치
 for i, chip in enumerate(chips):
-    st.markdown('<div class="chip-item">', unsafe_allow_html=True)
     if st.button(chip, key=f"chip_{i}"):
         st.session_state.selected_chip = chip
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # CSS Grid 컨테이너 종료
 st.markdown('</div></div>', unsafe_allow_html=True)

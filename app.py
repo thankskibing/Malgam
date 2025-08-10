@@ -117,6 +117,11 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
+# ----------------- 환영 메시지 (먼저 표시) -----------------
+if not st.session_state.welcome_shown:
+    st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
+    st.session_state.welcome_shown = True
+
 # ----------------- 퀵칩 (2 × 3) - 6개 버튼 -----------------
 st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
 
@@ -155,11 +160,6 @@ with col6:
     if st.button(chip_data[5], key="chip_5", use_container_width=True):
         send_and_stream(chip_data[5])
         st.rerun()
-
-# ----------------- 환영 메시지 (칩 아래 1회) -----------------
-if not st.session_state.welcome_shown:
-    st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
-    st.session_state.welcome_shown = True
 
 # ----------------- 대화 렌더 -----------------
 for m in st.session_state.messages:

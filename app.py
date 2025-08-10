@@ -1,6 +1,5 @@
 from openai import OpenAI
 import streamlit as st
-from urllib.parse import quote, unquote
 from pathlib import Path
 import base64
 
@@ -44,42 +43,56 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵버튼 항상 3열 고정 ===== */
+/* ===== 퀵칩 타이틀 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
+
+/* ── 여기부터 '3열 강제' + pill 버튼 스타일 추가 ───────────── */
+/* 한 줄(3개) 래퍼 */
 .chip-row { margin: 0 16px 10px 16px; }
+
+/* Streamlit이 모바일에서 columns를 1열로 바꾸는 걸 무력화: 그리드로 강제 */
 .chip-row [data-testid="stHorizontalBlock"]{
-  display:flex !important;
-  flex-wrap:nowrap !important;
+  display:grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap:10px !important;
+  align-items:stretch !important;
 }
+/* 각 column 컨테이너는 grid에 맡기고 폭 고정 해제 */
 .chip-row [data-testid="stHorizontalBlock"] > div,
 .chip-row [data-testid="column"]{
   padding:0 !important;
-  flex:0 0 calc((100% - 20px)/3) !important;
-  max-width:calc((100% - 20px)/3) !important;
+  width:auto !important;
+  flex:unset !important;
+  max-width:none !important;
 }
-.chip-btn .stButton > button{
+
+/* st.button 을 칩처럼 보이게 (radius 100) */
+.chip-btn .stButton>button{
   width:100%;
   height:40px;
-  border-radius:100px !important;
+  border-radius:100px !important;   /* ★ 둥글게 */
   background:#fff !important;
   color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
   font-weight:800; font-size:12px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
-.chip-btn .stButton > button:hover,
-.chip-btn .stButton > button:focus{ background:#fff !important; }
+.chip-btn .stButton>button:hover,
+.chip-btn .stButton>button:focus{ background:#fff !important; }
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-/* 입력창 */
-[data-testid="stChatInput"]{background:transparent!important;border-radius:999px!important;border:1px solid #7B2BFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
+/* 입력창 (네가 쓰던 스타일 그대로) */
+[data-testid="stChatInput"]{
+  background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;
+  box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important
+}
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
-[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important;color:#000!important}
+[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 </style>
 """, unsafe_allow_html=True)
@@ -114,7 +127,7 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵버튼 3×3 -----------------
+# ----------------- 퀵버튼 3×3 (버튼, 리로드 없음) -----------------
 st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
@@ -124,17 +137,17 @@ chips = [
 ]
 
 for i in range(0, len(chips), 3):
-    st.markdown('<div class="chip-row">', unsafe_allow_html=True)
+    st.markdown('<div class="chip-row">', unsafe_allow_html=True)   # ★ 3열 강제 래퍼
     cols = st.columns(3, gap="small")
     for c, label in zip(cols, chips[i:i+3]):
         with c:
             st.markdown('<div class="chip-btn">', unsafe_allow_html=True)
             if st.button(label, key=f"chip_{i}_{label}", use_container_width=True):
-                send_and_stream(label)
+                send_and_stream(label)   # ✅ 리로드 없이 전송
             st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)                    # ★ 래퍼 닫기
 
-# ----------------- 환영 메시지 -----------------
+# ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True

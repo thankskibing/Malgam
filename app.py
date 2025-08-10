@@ -48,13 +48,26 @@ st.markdown("""
 .chip-btn{
   display:inline-flex; align-items:center; gap:6px;
   text-decoration:none;
-  background:#7B2BFF; color:#fff; border:1px solid #7B2BFF;
-  border-radius:999px; padding:6px 12px; font-size:14px; font-weight:600;
-  box-shadow:0 4px 12px rgba(123,43,255,.22);
+  background:#FFFFFF;                /* 🔥 배경 흰색 */
+  color:#4B2EFF;                      /* 🔥 글씨 보라 */
+  border:1px solid #7B2BFF;           /* 🔥 테두리 보라 */
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:14px;
+  font-weight:600;
+  box-shadow:0 2px 6px rgba(0,0,0,.08); /* 더 가벼운 그림자 */
   transition:background-color .2s ease, transform .06s ease;
 }
-.chip-btn:hover{ background:#8C4FFF; border-color:#8C4FFF; }
+.chip-btn:hover{
+  background:#F5F1FF;                 /* 🔥 hover 시 연보라 */
+  border-color:#7B2BFF;
+}
 .chip-btn:active{ transform:scale(.98); }
+
+/* 칩 스크롤 아래 여백 */
+.chip-scroll{
+  margin-bottom: 12px; /* 🔥 말풍선과 간격 */
+}
 
 /* 입력창 간격 */
 [data-testid="stChatInput"]{ margin:0 12px 12px 12px; }

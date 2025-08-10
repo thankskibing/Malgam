@@ -126,7 +126,7 @@ chip_data = [
     "💬프롬프트 가이드", "🎨피그마 사용법", "📄노션 사용법"
 ]
 
-# 첫 번째 행 (0, 1, 2)
+# 첫 번째 행 (0, 1)
 col1, col2, col3 = st.columns(3)
 with col1:
     if st.button(chip_data[0], key="chip_0", use_container_width=True):
@@ -137,8 +137,8 @@ with col2:
         send_and_stream(chip_data[1])
         st.rerun()
 with col3:
-    if st.button(chip_data[2], key="chip_2", use_container_width=True):
-        send_and_stream(chip_data[2])
+    if st.button(chip_data[1], key="chip_2", use_container_width=True):
+        send_and_stream(chip_data[1])
         st.rerun()
 
 # 두 번째 행 (3, 4, 5)
@@ -154,21 +154,6 @@ with col5:
 with col6:
     if st.button(chip_data[5], key="chip_5", use_container_width=True):
         send_and_stream(chip_data[5])
-        st.rerun()
-
-# 세 번째 행 (6, 7, 8)
-col7, col8, col9 = st.columns(3)
-with col7:
-    if st.button(chip_data[6], key="chip_6", use_container_width=True):
-        send_and_stream(chip_data[6])
-        st.rerun()
-with col8:
-    if st.button(chip_data[7], key="chip_7", use_container_width=True):
-        send_and_stream(chip_data[7])
-        st.rerun()
-with col9:
-    if st.button(chip_data[8], key="chip_8", use_container_width=True):
-        send_and_stream(chip_data[8])
         st.rerun()
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------

@@ -42,11 +42,11 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵버튼 ===== */
+/* ===== 퀵버튼: 안내/레이아웃 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
 .chip-row { margin: 0 16px 10px 16px; }
 
-/* 버튼을 칩처럼 (pill) */
+/* 버튼을 칩처럼(Pill) */
 .chip-btn .stButton>button{
   width:100%; height:40px;
   border-radius:100px !important;       /* pill */
@@ -76,32 +76,34 @@ st.markdown("""
 }
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 
-/* ───────────── 강제 3열 고정 (모든 해상도, 640px 이하 포함) ───────────── */
-/* Streamlit의 columns가 모바일에서 1열로 바뀌는 규칙을 덮어씀 */
-html body .block-container .chip-row [data-testid="stHorizontalBlock"]{
-  display:grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+/* ─────────── 핵심: chip-row 안의 st.columns를 ‘항상 3열’로 강제 ─────────── */
+/* (캡처 DOM 기준: stHorizontalBlock > stColumn > stVerticalBlock) */
+html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock{
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
   gap:10px !important;
   align-items:stretch !important;
 }
-html body .block-container .chip-row [data-testid="stHorizontalBlock"] > div,
-html body .block-container .chip-row [data-testid="column"]{
+html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock
+  > div[data-testid="stColumn"].stColumn{
   padding:0 !important;
-  width:auto !important;
+  flex:0 0 calc((100% - 20px)/3) !important;   /* 3열 (gap 10px × 2) */
+  max-width:calc((100% - 20px)/3) !important;
   min-width:0 !important;
-  flex:unset !important;
-  max-width:none !important;
 }
+html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock
+  > div[data-testid="stColumn"].stColumn .stVerticalBlock{
+  height:auto !important;
+}
+/* 640px 이하에서도 한 번 더 못박기 */
 @media (max-width: 640px){
-  html body .block-container .chip-row [data-testid="stHorizontalBlock"]{
-    display:grid !important;
-    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
-    gap:10px !important;
+  html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock{
+    display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:10px !important;
   }
-  html body .block-container .chip-row [data-testid="stHorizontalBlock"] > div,
-  html body .block-container .chip-row [data-testid="column"]{
-    padding:0 !important; width:auto !important; min-width:0 !important;
-    flex:unset !important; max-width:none !important;
+  html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock
+    > div[data-testid="stColumn"].stColumn{
+    padding:0 !important; flex:0 0 calc((100% - 20px)/3) !important; max-width:calc((100% - 20px)/3) !important; min-width:0 !important;
   }
 }
 </style>

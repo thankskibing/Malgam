@@ -117,57 +117,59 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (3 × 3) - 확실한 컬럼 방식 -----------------
-st.markdown('<div class="quick-title">궁금한 키워드 눌러보라감🥔</div>', unsafe_allow_html=True)
+# ----------------- 퀵칩 (3 × 3) - 안전한 컬럼 방식 -----------------
+st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
 
-chips = [
-    "📝AI 기획서 작성","🛠️툴 추천","💡프롬프트 가이드",
-    "🔍UX 리서치 설계","🎨피그마 사용법","📄노션 사용법"
+# 칩 데이터를 명확히 정의 (9개)
+chip_data = [
+    "📝AI 기획서 작성", "🛠️툴 추천", "💡아이디어 확장",
+    "🔍AI 리서치", "🎨피그마 사용법", "📄노션 사용법",
+    "🖱️프로토타입 팁", "👥UX 리서치 설계", "💬프롬프트 가이드"
 ]
 
-# 첫 번째 행
+# 첫 번째 행 (0, 1, 2)
 col1, col2, col3 = st.columns(3)
 with col1:
-    if st.button(chips[0], key="chip_0", use_container_width=True):
-        send_and_stream(chips[0])
+    if st.button(chip_data[0], key="chip_0", use_container_width=True):
+        send_and_stream(chip_data[0])
         st.rerun()
 with col2:
-    if st.button(chips[1], key="chip_1", use_container_width=True):
-        send_and_stream(chips[1])
+    if st.button(chip_data[1], key="chip_1", use_container_width=True):
+        send_and_stream(chip_data[1])
         st.rerun()
 with col3:
-    if st.button(chips[2], key="chip_2", use_container_width=True):
-        send_and_stream(chips[2])
+    if st.button(chip_data[2], key="chip_2", use_container_width=True):
+        send_and_stream(chip_data[2])
         st.rerun()
 
-# 두 번째 행
+# 두 번째 행 (3, 4, 5)
 col4, col5, col6 = st.columns(3)
 with col4:
-    if st.button(chips[3], key="chip_3", use_container_width=True):
-        send_and_stream(chips[3])
+    if st.button(chip_data[3], key="chip_3", use_container_width=True):
+        send_and_stream(chip_data[3])
         st.rerun()
 with col5:
-    if st.button(chips[4], key="chip_4", use_container_width=True):
-        send_and_stream(chips[4])
+    if st.button(chip_data[4], key="chip_4", use_container_width=True):
+        send_and_stream(chip_data[4])
         st.rerun()
 with col6:
-    if st.button(chips[5], key="chip_5", use_container_width=True):
-        send_and_stream(chips[5])
+    if st.button(chip_data[5], key="chip_5", use_container_width=True):
+        send_and_stream(chip_data[5])
         st.rerun()
 
-# 세 번째 행
+# 세 번째 행 (6, 7, 8)
 col7, col8, col9 = st.columns(3)
 with col7:
-    if st.button(chips[6], key="chip_6", use_container_width=True):
-        send_and_stream(chips[6])
+    if st.button(chip_data[6], key="chip_6", use_container_width=True):
+        send_and_stream(chip_data[6])
         st.rerun()
 with col8:
-    if st.button(chips[7], key="chip_7", use_container_width=True):
-        send_and_stream(chips[7])
+    if st.button(chip_data[7], key="chip_7", use_container_width=True):
+        send_and_stream(chip_data[7])
         st.rerun()
 with col9:
-    if st.button(chips[8], key="chip_8", use_container_width=True):
-        send_and_stream(chips[8])
+    if st.button(chip_data[8], key="chip_8", use_container_width=True):
+        send_and_stream(chip_data[8])
         st.rerun()
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------

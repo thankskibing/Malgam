@@ -44,35 +44,63 @@ st.markdown("""
 
 /* ===== 퀵버튼 안내 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
-.chip-row { margin: 0 12px 8px 12px; }   /* 세로 간격 살짝 축소 */
 
-/* 버튼을 칩처럼(Pill) + 동일 사이즈 강제 */
+/* ===== Quick Chips 사이즈/간격/둥근모서리 통일 ===== */
 :root{
-  --chip-h: 42px;   /* 버튼 높이 */
-  --chip-gap: 6px;  /* 버튼 사이 간격 */
+  --chip-h: 40px;    /* 버튼 높이 */
+  --chip-gap-x: 8px; /* 가로 간격 */
+  --chip-gap-y: 6px; /* 세로 간격(행 간격) */
 }
+
+/* 한 줄(3개) 래퍼: 세로 간격만 관리 */
+.chip-row{
+  margin: 0 10px var(--chip-gap-y) 10px !important;
+}
+
+/* st.columns 블록 자체의 여백 제거 + 가로 gap 제어 */
+.chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock{
+  margin:0 !important;
+  gap: var(--chip-gap-x) !important;
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  align-items:stretch !important;
+}
+
+/* 각 column을 3등분으로 고정 */
+.chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn{
+  padding:0 !important;
+  flex:0 0 calc((100% - (var(--chip-gap-x) * 2)) / 3) !important;
+  max-width:calc((100% - (var(--chip-gap-x) * 2)) / 3) !important;
+  min-width:0 !important;
+}
+
+/* Streamlit 기본 여백들 없애서 행 간격 뚱뚱해지는 문제 제거 */
+.chip-row .stVerticalBlock,
+.chip-row .stVerticalBlock > div,
+.chip-row .stElementContainer.element-container,
+.chip-row .stButton{ margin:0 !important; padding:0 !important; }
+
+/* 버튼: pill + 고정 높이 + 가운데 정렬 + 줄바꿈 금지 */
 .chip-btn .stButton>button{
-  display:flex; align-items:center; justify-content:center;
-  width:100%; height:var(--chip-h);
-  padding:0 12px;
-  border-radius:9999px !important;      /* = radius 100 효과 */
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  width:100% !important; height:var(--chip-h) !important;
+  line-height:var(--chip-h) !important;
+  padding:0 12px !important;
+  border-radius:9999px !important;               /* 완전 pill */
   background:#fff !important; color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
-  font-weight:800; font-size:12px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  font-weight:800 !important; font-size:12px !important;
+  white-space:nowrap !important; word-break:keep-all !important;
+  overflow:hidden !important; text-overflow:ellipsis !important;
+  box-shadow:0 2px 6px rgba(0,0,0,.08) !important;
+}
+.chip-btn .stButton>button *{
+  white-space:nowrap !important; word-break:keep-all !important;
+  overflow:hidden !important; text-overflow:ellipsis !important;
 }
 .chip-btn .stButton>button:hover, .chip-btn .stButton>button:focus{
   background:#fff !important;
-}
-/* 버튼 위아래 기본 여백 제거 + 줄 간격 좁히기 */
-.chip-row .stVerticalBlock{ margin:0 !important; padding:0 !important; }
-.chip-row .stButton{ margin:0 !important; }
-/* 버튼 내부 텍스트/이모지 줄바꿈 방지 */
-.chip-btn .stButton > button *{
-  white-space:nowrap !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
 }
 
 /* 스피너 흰색 */
@@ -90,98 +118,6 @@ st.markdown("""
   border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important
 }
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
-
-/* ─────────── 🔒 강제 3열 고정 (모든 st.columns 대상) ─────────── */
-/* Streamlit 내부 미디어쿼리를 전부 이겨버리기 위해 높은 우선순위 사용 */
-div[data-testid="stHorizontalBlock"].stHorizontalBlock{
-  display:flex !important;
-  flex-direction:row !important;
-  flex-wrap:nowrap !important;
-  gap:var(--chip-gap) !important;         /* 간격 통일 */
-  align-items:stretch !important;
-}
-div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn{
-  padding:0 !important;
-  flex:0 0 calc((100% - (var(--chip-gap) * 2))/3) !important;   /* 3열 (gap ×2) */
-  max-width:calc((100% - (var(--chip-gap) * 2))/3) !important;
-  min-width:0 !important;
-}
-div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn .stVerticalBlock{
-  height:auto !important;
-}
-/* 640px 이하에서도 한 번 더 못박기 */
-@media (max-width: 640px){
-  div[data-testid="stHorizontalBlock"].stHorizontalBlock{
-    display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:var(--chip-gap) !important;
-  }
-  div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn{
-    padding:0 !important;
-    flex:0 0 calc((100% - (var(--chip-gap) * 2))/3) !important;
-    max-width:calc((100% - (var(--chip-gap) * 2))/3) !important;
-    min-width:0 !important;
-  }
-}
-/* =========================================================
-   🔧 Quick Chips 최종 보정: 크기/간격/둥근모서리/줄바꿈 완전 통일
-   ========================================================= */
-
-/* 버튼 높이/간격 변수 */
-:root{ --chip-h: 40px; --chip-gap: 6px; }
-
-/* chip-row 자체 여백 줄이기 */
-.chip-row{ margin: 0 10px var(--chip-gap) 10px !important; }
-
-/* st.columns 래퍼 여백/패딩 제거 (세로 간격 커지는 주범) */
-.chip-row .stVerticalBlock,
-.chip-row .stVerticalBlock > div,
-.chip-row .stElementContainer.element-container{
-  margin:0 !important;
-  padding:0 !important;
-}
-
-/* 3열 레이아웃의 가로/세로 gap 통일 */
-div[data-testid="stHorizontalBlock"].stHorizontalBlock{
-  gap: var(--chip-gap) !important;
-}
-
-/* 버튼 자신을 pill + 고정 높이 + 중앙정렬 + 한 줄 고정 */
-.chip-btn .stButton > button{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:100% !important;
-  height: var(--chip-h) !important;
-  line-height: var(--chip-h) !important;     /* 텍스트 수직정렬 보조 */
-  padding: 0 12px !important;
-  border-radius: 9999px !important;          /* 진짜 pill */
-  background:#fff !important;
-  color:#1F55A4 !important;
-  border:1px solid #7B2BFF !important;
-  font-weight:800 !important;
-  font-size:12px !important;
-  box-shadow:0 2px 6px rgba(0,0,0,.08) !important;
-
-  /* 줄바꿈/쪼개짐 방지(한글 포함) */
-  white-space: nowrap !important;
-  word-break: keep-all !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-/* 버튼 내부 모든 요소에도 줄바꿈 방지 강제 */
-.chip-btn .stButton > button *,
-.chip-btn .stButton > button span{
-  white-space: nowrap !important;
-  word-break: keep-all !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-/* 모바일 640 이하에서도 동일 보정 */
-@media (max-width:640px){
-  .chip-row{ margin: 0 8px var(--chip-gap) 8px !important; }
-  .chip-btn .stButton > button{ font-size:11px !important; }
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -204,7 +140,8 @@ if "welcome_shown" not in st.session_state:
 # ----------------- 응답 함수 -----------------
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
-    with st.spinner("🥔💭말감이 생각 중…"):
+    # 스피너는 '칩 그리드 아래' 전체 폭에 보이도록, 칩 렌더링 이후에 호출
+    with st.spinner("🥔💭 말감이 생각 중…"):
         stream = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=st.session_state.messages,
@@ -220,7 +157,7 @@ if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
 
-# ========= 2) 퀵버튼 (항상 3×3, 리로드 없음) =========
+# ========= 2) 퀵버튼 (3×3, 리로드 없음) =========
 st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
@@ -229,6 +166,9 @@ chips = [
   "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
+# 버튼 클릭 → 우선 pending에 저장 (칩 내부가 아닌, 칩 아래에서 스피너가 나오도록)
+pending = None
+
 for i in range(0, len(chips), 3):
     st.markdown('<div class="chip-row">', unsafe_allow_html=True)
     cols = st.columns(3, gap="small")
@@ -236,9 +176,13 @@ for i in range(0, len(chips), 3):
         with c:
             st.markdown('<div class="chip-btn">', unsafe_allow_html=True)
             if st.button(label, key=f"chip_{i}_{label}", use_container_width=True):
-                send_and_stream(label)
+                pending = label
             st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
+# 칩 그리드 출력이 끝난 뒤에 호출 → 스피너가 칩 아래 '한 줄 전체'로 표시됨
+if pending:
+    send_and_stream(pending)
 
 # ========= 3) 대화 렌더 =========
 for m in st.session_state.messages:

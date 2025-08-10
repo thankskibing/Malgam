@@ -1,5 +1,6 @@
 from openai import OpenAI
 import streamlit as st
+from urllib.parse import quote, unquote
 
 # ----------------- 기본 설정 -----------------
 st.set_page_config(page_title="말감 챗봇", page_icon="🥔", layout="centered")
@@ -32,57 +33,28 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right;}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left;}
 
-/* -------- 빠른 답변 캐러셀 -------- */
+/* -------- 칩 한 줄 캐러셀 (HTML 링크 기반) -------- */
 .quick-title{ font-size:15px; margin:4px 0 10px 2px; color:#fff; font-weight:700; }
 
-/* 캐러셀 바 */
-.carousel {
-  display:flex; align-items:center; gap:10px;
-  padding:4px 0 8px;
+/* 가로 스크롤 트랙 */
+.chip-scroll{
+  display:flex; gap:10px; overflow-x:auto; overflow-y:hidden; white-space:nowrap;
+  padding:4px 0 8px; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
 }
+.chip-scroll::-webkit-scrollbar{ display:none; }
 
-/* 좌/우 화살표 버튼 (작은 보조 버튼 느낌) */
-.arrow .stButton > button{
-  background:rgba(255,255,255,.18) !important;
-  color:#fff !important;
-  border:1px solid rgba(255,255,255,.35) !important;
-  border-radius:999px !important;
-  padding:6px 10px !important;
-  font-weight:700 !important;
-  backdrop-filter: blur(6px);
-}
-.arrow .stButton > button:hover{
-  background:rgba(255,255,255,.28) !important;
-}
-
-/* 칩 영역: 한 줄, 줄바꿈 없음, 넘치면 숨김(페이지로 넘김) */
-.chips-viewport{
-  flex:1 1 auto;
-  display:flex; gap:10px;
-  overflow:hidden;           /* 페이지 외 칩 숨김 */
-  white-space:nowrap;
-}
-
-/* 칩 버튼(작은 pill) */
-.chip .stButton{ width:auto; margin:0; }
-.chip .stButton > button{
+/* 칩(링크를 버튼처럼) */
+.chip-btn{
   display:inline-flex; align-items:center; gap:6px;
-  width:auto;
-  background:#7B2BFF !important; color:#FFFFFF !important; text-shadow:none !important;
-  border:1px solid #7B2BFF !important; border-radius:999px !important;
-  padding:6px 12px !important; font-size:14px !important; font-weight:600 !important;
+  text-decoration:none;
+  background:#7B2BFF; color:#fff; border:1px solid #7B2BFF;
+  border-radius:999px; padding:6px 12px; font-size:14px; font-weight:600;
   box-shadow:0 4px 12px rgba(123,43,255,.22);
   transition:background-color .2s ease, transform .06s ease;
-  cursor:pointer;
 }
-.chip .stButton > button:hover{ background:#8C4FFF !important; border-color:#8C4FFF !important; }
-.chip .stButton > button:active{ transform:scale(.98); }
-
-/* 보라 라운드 툴팁 */
-[data-testid="stTooltip"] div, div[role="tooltip"], [data-baseweb="tooltip"]{
-  background:#7B2BFF !important; color:#fff !important; border-radius:100px !important;
-  padding:6px 10px !important; box-shadow:0 6px 16px rgba(123,43,255,.25) !important; border:0 !important;
-}
+.chip-btn:hover{ background:#8C4FFF; border-color:#8C4FFF; }
+.chip-btn:active{ transform:scale(.98); }
 
 /* 입력창 간격 */
 [data-testid="stChatInput"]{ margin:0 12px 12px 12px; }
@@ -115,42 +87,22 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 칩 데이터 & 캐러셀 페이지 상태 -----------------
-quick_items = ["AI 기획서 작성", "툴 추천", "아이디어 확장", "AI 리서치", "피그마 사용법", "노션 사용법",
-               "프로토타입 팁", "UX 리서치 설계", "프롬프트 가이드"]
+# ----------------- 칩 목록 -----------------
+quick_items = [
+    "AI 기획서 작성", "툴 추천", "아이디어 확장",
+    "AI 리서치", "피그마 사용법", "노션 사용법",
+    "프로토타입 팁", "UX 리서치 설계", "프롬프트 가이드"
+]
 
-# 한 화면에 보여줄 칩 개수(모바일 360 기준 4개 정도가 안정적)
-VIEW_COUNT = 4
-total_pages = max(1, (len(quick_items) + VIEW_COUNT - 1) // VIEW_COUNT)
-if "chip_page" not in st.session_state:
-    st.session_state.chip_page = 0
-
-# ----------------- 캐러셀(화살표 + 한 줄 칩) -----------------
+# ----------------- 칩 캐러셀 (HTML 링크) -----------------
 st.markdown('<p class="quick-title">아래 키워드로 물어볼 수도 있겠감</p>', unsafe_allow_html=True)
-c1, c2, c3 = st.columns([1, 10, 1])
 
-with c1:  # Prev
-    st.markdown('<div class="arrow">', unsafe_allow_html=True)
-    if st.button("‹", key="chip_prev", help="이전"):
-        st.session_state.chip_page = (st.session_state.chip_page - 1) % total_pages
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c2:  # Viewport + chips (현재 페이지만)
-    st.markdown('<div class="chips-viewport">', unsafe_allow_html=True)
-    start = st.session_state.chip_page * VIEW_COUNT
-    end = min(start + VIEW_COUNT, len(quick_items))
-    for i, label in enumerate(quick_items[start:end], start=start):
-        st.markdown('<div class="chip">', unsafe_allow_html=True)
-        if st.button(label, key=f"quick_{i}", help="클릭하면 바로 전송돼요"):
-            st.session_state["__quick_send__"] = label
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c3:  # Next
-    st.markdown('<div class="arrow">', unsafe_allow_html=True)
-    if st.button("›", key="chip_next", help="다음"):
-        st.session_state.chip_page = (st.session_state.chip_page + 1) % total_pages
-    st.markdown('</div>', unsafe_allow_html=True)
+html = ['<div class="chip-scroll">']
+for label in quick_items:
+    href = f'?chip={quote(label)}'
+    html.append(f'<a class="chip-btn" href="{href}" title="클릭하면 바로 전송돼요">{label}</a>')
+html.append('</div>')
+st.markdown("".join(html), unsafe_allow_html=True)
 
 # ----------------- 인사 말풍선 (버튼 아래 1회 노출) -----------------
 if not st.session_state.welcome_shown:
@@ -181,10 +133,14 @@ def send_and_stream(user_text: str):
     st.markdown(f'<div class="chat-bubble assistant-bubble">{assistant_text}</div>', unsafe_allow_html=True)
     st.session_state.messages.append({"role":"assistant","content":assistant_text})
 
-# ----------------- 칩 클릭 시 전송 -----------------
-if st.session_state.get("__quick_send__"):
-    send_and_stream(st.session_state["__quick_send__"])
-    del st.session_state["__quick_send__"]
+# ----------------- 칩 클릭 처리 (쿼리파라미터) -----------------
+qp = st.query_params
+if "chip" in qp:
+    picked = unquote(qp["chip"])
+    # 보내기
+    send_and_stream(picked)
+    # 파라미터 제거 (새로고침 없이 UI 깔끔하게)
+    del st.query_params["chip"]
 
 # ----------------- 입력창 -----------------
 if prompt := st.chat_input("말감이에게 궁금한걸 말해보세요!"):

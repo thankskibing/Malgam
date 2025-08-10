@@ -1,5 +1,6 @@
 from openai import OpenAI
 import streamlit as st
+from urllib.parse import quote, unquote
 from pathlib import Path
 import base64
 
@@ -43,39 +44,42 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵버튼 3열 고정 ===== */
+/* ===== 퀵버튼 항상 3열 고정 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
-.chips-wrap{margin:0 16px 18px 16px}
-.chip-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));  
-  gap:10px;
+.chip-row { margin: 0 16px 10px 16px; }
+.chip-row [data-testid="stHorizontalBlock"]{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:10px !important;
 }
-.chip-btn button{
+.chip-row [data-testid="stHorizontalBlock"] > div,
+.chip-row [data-testid="column"]{
+  padding:0 !important;
+  flex:0 0 calc((100% - 20px)/3) !important;
+  max-width:calc((100% - 20px)/3) !important;
+}
+.chip-btn .stButton > button{
   width:100%;
-  height:38px;
-  background:#fff;
-  color:#1F55A4;
-  border:1px solid #7B2BFF;
-  border-radius:100px !important; /* ★ 둥근 버튼 */
-  font-weight:800;
-  font-size:12px;
+  height:40px;
+  border-radius:100px !important;
+  background:#fff !important;
+  color:#1F55A4 !important;
+  border:1px solid #7B2BFF !important;
+  font-weight:800; font-size:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
-.chip-btn button:hover{
-  background:#F5F1FF;
-  border-color:#7B2BFF;
-}
+.chip-btn .stButton > button:hover,
+.chip-btn .stButton > button:focus{ background:#fff !important; }
 
-/* ===== 스피너 ===== */
+/* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
 /* 입력창 */
-[data-testid="stChatInput"]{background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
+[data-testid="stChatInput"]{background:transparent!important;border-radius:999px!important;border:1px solid #7B2BFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
-[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
+[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important;color:#000!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 </style>
 """, unsafe_allow_html=True)
@@ -88,7 +92,7 @@ st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
 # ----------------- 세션 -----------------
 SYSTEM = """#지침: 너는 ui/ux 기획, 디자인, 리서처 업무를 도와주는 말감이야.
-친근하게 답하고 마지막에 맞는 이모지 추가. 영어 질문도 한글로 답변."""
+친근하게 답하고 마지막에 답변에 맞는 이모지 추가. 영어 질문도 한글로 답변."""
 WELCOME = "안녕하세요! 저는 여러분을 도와줄 ‘말하는 감자 말감이’예요. 궁금한 점이나 고민이 있다면 자유롭게 물어보라감!😊"
 
 if "messages" not in st.session_state:
@@ -110,8 +114,8 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵버튼 -----------------
-st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감🥔</div>', unsafe_allow_html=True)
+# ----------------- 퀵버튼 3×3 -----------------
+st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
   "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
@@ -119,11 +123,16 @@ chips = [
   "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-cols = st.columns(3)
-for i, label in enumerate(chips):
-    with cols[i % 3]:
-        if st.button(label, key=f"chip_{i}", use_container_width=True):
-            send_and_stream(label)
+for i in range(0, len(chips), 3):
+    st.markdown('<div class="chip-row">', unsafe_allow_html=True)
+    cols = st.columns(3, gap="small")
+    for c, label in zip(cols, chips[i:i+3]):
+        with c:
+            st.markdown('<div class="chip-btn">', unsafe_allow_html=True)
+            if st.button(label, key=f"chip_{i}_{label}", use_container_width=True):
+                send_and_stream(label)
+            st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------- 환영 메시지 -----------------
 if not st.session_state.welcome_shown:

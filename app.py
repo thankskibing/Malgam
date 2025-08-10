@@ -52,24 +52,39 @@ st.markdown("""
   gap:10px !important;
   width:100% !important;
 }
-.chip-item{
+.chip{
   display:flex !important;
-  width:100% !important;
-  margin:0 !important;
-  padding:0 !important;
 }
-/* Streamlit 기본 요소들 강제 오버라이드 */
-.chip-grid > div[data-testid="element-container"] {
-  display:flex !important;
-  width:100% !important;
-  margin:0 !important;
-  padding:0 !important;
+.chip-btn{
+  flex:1 1 auto !important; 
+  display:inline-flex !important; 
+  align-items:center !important; 
+  justify-content:center !important;
+  background:#fff !important; 
+  color:#1F55A4 !important; 
+  border:1px solid #7B2BFF !important;
+  border-radius:100px !important; 
+  padding:8px 10px !important;            
+  font-weight:800 !important; 
+  font-size:12px !important;                  
+  white-space:nowrap !important; 
+  overflow:hidden !important; 
+  text-overflow:ellipsis !important;  
+  box-shadow:0 2px 6px rgba(0,0,0,.08) !important; 
+  transition:background-color .2s, transform .06s !important;
+  cursor:pointer !important;
+  width: 100% !important;
 }
-.chip-grid .element-container {
-  display:flex !important;
-  width:100% !important;
-  margin:0 !important;
-  padding:0 !important;
+.chip-btn:hover{
+  background:#F5F1FF !important;
+}
+.chip-btn:active{
+  transform:scale(.98) !important;
+}
+
+/* 히든 input 숨기기 */
+input[data-testid*="hidden_chip_receiver"] {
+  display: none !important;
 }
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
@@ -83,37 +98,7 @@ st.markdown("""
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 
-/* 퀵칩 버튼 스타일 */
-.chip-grid .stButton {
-  width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-.chip-grid .stButton > button {
-  background:#fff !important; 
-  color:#1F55A4 !important; 
-  border:1px solid #7B2BFF !important;
-  border-radius:100px !important; 
-  padding:8px 10px !important;            
-  font-weight:800 !important; 
-  font-size:12px !important;                  
-  white-space:nowrap !important; 
-  overflow:hidden !important; 
-  text-overflow:ellipsis !important;  
-  box-shadow:0 2px 6px rgba(0,0,0,.08) !important; 
-  transition:background-color .2s, transform .06s !important;
-  width: 100% !important;
-  height: auto !important;
-  min-height: auto !important;
-  margin: 0 !important;
-}
-.chip-grid .stButton > button:hover {
-  background:#F5F1FF !important;
-  transform:scale(.98) !important;
-}
-.chip-grid .stButton > button:focus {
-  box-shadow: 0 0 8px rgba(123,43,255,.35) !important;
-}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -158,17 +143,64 @@ chips = [
     "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# CSS Grid 컨테이너 시작
-st.markdown('<div class="chips-wrap"><div class="chip-grid">', unsafe_allow_html=True)
+# ----------------- 퀵칩 (3 × 3) - HTML 버튼으로 직접 구현 -----------------
+st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
-# 각 칩을 그리드 아이템으로 배치
+chips = [
+    "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
+    "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
+    "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
+]
+
+# HTML 버튼으로 직접 구현
+html_buttons = ['<div class="chips-wrap"><div class="chip-grid">']
 for i, chip in enumerate(chips):
-    if st.button(chip, key=f"chip_{i}"):
-        st.session_state.selected_chip = chip
-        st.rerun()
+    # 각 버튼에 data-chip 속성으로 텍스트 저장
+    html_buttons.append(f'''
+    <div class="chip">
+        <button class="chip-btn" data-chip="{chip}" onclick="handleChipClick('{chip}')">
+            {chip}
+        </button>
+    </div>
+    ''')
+html_buttons.append('</div></div>')
 
-# CSS Grid 컨테이너 종료
-st.markdown('</div></div>', unsafe_allow_html=True)
+# JavaScript 처리 함수
+html_buttons.append('''
+<script>
+let selectedChip = null;
+
+function handleChipClick(chipText) {
+    selectedChip = chipText;
+    // 히든 input에 값 설정
+    const hiddenInput = document.getElementById('hidden_chip_input');
+    if (hiddenInput) {
+        hiddenInput.value = chipText;
+        hiddenInput.dispatchEvent(new Event('input'));
+    }
+}
+
+// 페이지 로드 시 히든 input 생성
+document.addEventListener('DOMContentLoaded', function() {
+    if (!document.getElementById('hidden_chip_input')) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.id = 'hidden_chip_input';
+        document.body.appendChild(input);
+    }
+});
+</script>
+''')
+
+st.markdown(''.join(html_buttons), unsafe_allow_html=True)
+
+# 히든 input으로 값 받기
+selected_chip_value = st.text_input("", key="hidden_chip_receiver", label_visibility="hidden")
+if selected_chip_value and selected_chip_value in [chip for chip in chips]:
+    st.session_state.selected_chip = selected_chip_value
+    # input 초기화
+    st.session_state.hidden_chip_receiver = ""
+    st.rerun()
 
 # 선택된 칩 처리
 if st.session_state.selected_chip:

@@ -117,16 +117,16 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (3 × 3) - 안전한 컬럼 방식 -----------------
+# ----------------- 퀵칩 (2 × 3) - 6개 버튼 -----------------
 st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
 
-# 칩 데이터를 명확히 정의 (9개)
+# 칩 데이터를 6개로 정의
 chip_data = [
     "👥UX 리서치 설계", "📝AI 기획서 작성", "🛠️툴 추천",
     "💬프롬프트 가이드", "🎨피그마 사용법", "📄노션 사용법"
 ]
 
-# 첫 번째 행 (0, 1)
+# 첫 번째 행 (0, 1, 2)
 col1, col2, col3 = st.columns(3)
 with col1:
     if st.button(chip_data[0], key="chip_0", use_container_width=True):
@@ -137,8 +137,8 @@ with col2:
         send_and_stream(chip_data[1])
         st.rerun()
 with col3:
-    if st.button(chip_data[1], key="chip_2", use_container_width=True):
-        send_and_stream(chip_data[1])
+    if st.button(chip_data[2], key="chip_2", use_container_width=True):
+        send_and_stream(chip_data[2])
         st.rerun()
 
 # 두 번째 행 (3, 4, 5)

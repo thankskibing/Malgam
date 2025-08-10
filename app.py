@@ -108,23 +108,28 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (버튼, 3개씩 렌더) -----------------
+# ----------------- 퀵칩 (3 × 3) -----------------
 st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
-    "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
-    "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
-    "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
+  "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
+  "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
+  "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-for i in range(0, len(chips), 3):
-    cols = st.columns(3)
-    for c, label in zip(cols, chips[i:i+3]):
-        with c:
-            st.markdown('<div class="quick-btn">', unsafe_allow_html=True)
-            if st.button(label, key=f"chip_{i}_{label}"):
-                send_and_stream(label)   # ✅ 페이지 리로드 없이 바로 전송
-            st.markdown('</div>', unsafe_allow_html=True)
+# HTML Grid로 3열 고정 + 링크 클릭 → 쿼리파라미터 → 처리 후 제거
+html = ['<div class="chips-wrap"><div class="chip-grid">']
+for label in chips:
+    html.append(f'<div class="chip"><a href="?chip={quote(label)}" target="_self" title="클릭하면 바로 전송돼요">{label}</a></div>')
+html.append('</div></div>')
+st.markdown("".join(html), unsafe_allow_html=True)
+
+# 칩 클릭 처리 (흰색 스피너 포함)
+qp = st.query_params
+if "chip" in qp:
+    picked = unquote(qp["chip"])
+    send_and_stream(picked)        # 스피너 흰색으로 표시됨
+    del st.query_params["chip"]    # URL 정리 (새 탭 이동 없음)
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:

@@ -13,8 +13,7 @@ def logo_tag(path="logo.png"):
     if not p.exists():
         for c in [Path("static")/path, Path("assets")/path, Path("app/static")/path]:
             if c.exists():
-                p = c
-                break
+                p = c; break
     if not p.exists():
         return '<span class="logo-missing"></span>'
     data = base64.b64encode(p.read_bytes()).decode()
@@ -24,18 +23,17 @@ def logo_tag(path="logo.png"):
 # ----------------- 스타일 -----------------
 st.markdown("""
 <style>
-/* 헤더 숨기기 + 배경 */
+/* 헤더/배경 */
 [data-testid="stHeader"]{display:none;}
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
 .block-container{padding-top:0!important}
 
-/* 상단 바 (로고 + 타이틀) */
+/* 상단 바 + 언더라인 */
 .topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 6px}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
 .topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
 @media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
 
-/* 타이틀 바로 아래 얇은 라인 */
 .top-accent{height:2px;margin:6px 16px 10px 16px;background:rgba(255,255,255,.9);border-radius:999px;}
 
 /* 카드 */
@@ -65,8 +63,8 @@ st.markdown("""
 /* 칩 버튼 (아이콘+텍스트 여유 있게) */
 .quick-btn .stButton>button{
   width:100%; border-radius:100px;
-  padding:10px 14px;                               /* 여유 ↑ */
-  font-size:clamp(12px, 3.5vw, 13px);              /* 모바일 12 ~ 데스크탑 13 */
+  padding:10px 14px;
+  font-size:clamp(12px, 3.5vw, 13px);
   font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   background:#fff !important; color:#1F55A4 !important; border:1px solid #7B2BFF !important;
   box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
@@ -79,17 +77,41 @@ st.markdown("""
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-/* 입력창: 언더라인 스타일(두꺼운 흰 바 제거) */
+/* ===== 입력창: 보라색 말풍선(그라데이션)로 고정 =====
+   - 내부 모든 레이어 흰 배경 제거
+   - 둥근 모서리 + 그림자 + 테두리
+*/
 [data-testid="stChatInput"]{
-  background:transparent !important; border:none !important;
-  border-bottom:2px solid rgba(255,255,255,.9) !important; border-radius:0 !important;
-  box-shadow:none !important; padding:0 12px 6px 12px !important; margin:6px 16px 10px 16px !important;
+  background:linear-gradient(135deg,#8A39FF 0%, #7B2BFF 60%, #6C22FF 100%) !important;
+  border:1px solid rgba(255,255,255,.45) !important;
+  border-radius:999px !important;
+  box-shadow:0 8px 24px rgba(123,43,255,.35) !important;
+  margin:10px 16px 12px 16px !important;
+  padding:8px 12px !important;
 }
-[data-testid="stChatInput"]:focus-within{border-bottom:2px solid #FFFFFF !important; box-shadow:none !important;}
-[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] > div *:not(button):not(svg):not(path){
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+}
+[data-testid="stChatInput"]:focus-within{
+  border:2px solid rgba(255,255,255,.9) !important;
+  box-shadow:0 10px 28px rgba(123,43,255,.45) !important;
+}
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInput"] input,
+[data-testid="stChatInput"] div[contenteditable="true"],
+[data-testid="stChatInput"] div[role="textbox"]{
   background:transparent !important; border:none !important; outline:none !important; box-shadow:none !important;
+  color:#1B1B1B !important; font-size:16px !important;
 }
-[data-testid="stChatInput"] button svg path{fill:#FFFFFF !important;}
+[data-testid="stChatInput"] ::placeholder{ color:rgba(27,27,27,.55) !important; }
+
+/* 전송 버튼은 흰색 아이콘로 */
+[data-testid="stChatInput"] button{ background:transparent !important; }
+[data-testid="stChatInput"] button svg path{ fill:#FFFFFF !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -101,8 +123,8 @@ st.markdown('<div class="top-accent"></div>', unsafe_allow_html=True)
 st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
 # ----------------- 세션 -----------------
-SYSTEM = """#지침: 너는 ui/ux 기획, 디자인, 리서처 업무를 도와주고 질문을 받아주는 역할을 하는 말감이야.
-말끝은 '요'로, 친근하게 답하고 마지막에 맞는 이모지 추가. 영어 질문도 한글로 답변."""
+SYSTEM = """#지침: 너는 ui/ux 기획, 디자인, 리서처 업무를 도와주는 말감이야.
+친근하게 답하고 마지막에 '요'로 끝맺음, 답변에 맞는 이모지 추가. 영어 질문도 한글로 답변."""
 WELCOME = "안녕하세요! 저는 여러분을 도와줄 ‘말하는 감자 말감이’예요. 궁금한 점이나 고민이 있다면 자유롭게 물어보라감!😊"
 
 if "messages" not in st.session_state:
@@ -130,7 +152,7 @@ if not st.session_state.welcome_shown:
     st.session_state.welcome_shown = True
 
 # ========= 2) 키워드 칩(3×3, 버튼 기반) =========
-st.markdown('<div class="quick-title">🥔 아래 키워드 눌러서 물어보라감 🥔</div>', unsafe_allow_html=True)
+st.markdown('<div class="quick-title">🥔아래 키워드 눌러서 물어보라감🥔</div>', unsafe_allow_html=True)
 
 chips = [
     "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
@@ -140,12 +162,12 @@ chips = [
 
 for start in range(0, len(chips), 3):
     st.markdown('<div class="chips-wrap"><div class="quick-row">', unsafe_allow_html=True)
-    cols = st.columns(3)  # 3열 고정 (CSS로 강제)
+    cols = st.columns(3)  # CSS가 3열로 강제
     for col, label in zip(cols, chips[start:start+3]):
         with col:
             st.markdown('<div class="quick-btn">', unsafe_allow_html=True)
             if st.button(label, key=f"chip_{start}_{label}", help="클릭하면 바로 전송돼요"):
-                send_and_stream(label)   # ✅ 페이지 이동 없음 → 하얀 번쩍임 제거
+                send_and_stream(label)  # 리로드 없음
             st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div></div>', unsafe_allow_html=True)
 
@@ -153,8 +175,8 @@ for start in range(0, len(chips), 3):
 for m in st.session_state.messages:
     if m["role"] == "system":
         continue
-    cls = "user-bubble" if m["role"] == "user" else "assistant-bubble"
-    st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
+    klass = "user-bubble" if m["role"] == "user" else "assistant-bubble"
+    st.markdown(f'<div class="{klass} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
 # ========= 4) 입력창 =========
 if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):

@@ -47,23 +47,35 @@ st.markdown("""
 /* ===== 퀵칩: 전 해상도 3열 × 3줄 고정 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
 .chips-wrap{margin:0 16px 18px 16px}
+
+/* (원래 a태그 칩 스타일 – 유지) */
 .chip-grid{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));  /* 항상 3열 유지 */
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:10px;
 }
 .chip{display:flex}
 .chip a{
   flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center;
   text-decoration:none; background:#fff; color:#1F55A4; border:1px solid #7B2BFF;
-  border-radius:100px; padding:8px 10px;            /* ⬅ 패딩 소폭 축소 */
-  font-weight:800; font-size:12px;                  /* ⬅ 12px로 축소 */
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;  /* 줄바꿈 방지 */
+  border-radius:100px; padding:8px 10px; font-weight:800; font-size:12px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
   cursor:pointer;
 }
 .chip a:hover{background:#F5F1FF}
 .chip a:active{transform:scale(.98)}
+
+/* ★ 버튼을 a칩처럼 보이게 (추가) */
+.chip-btn .stButton>button{
+  width:100%;
+  border-radius:100px;
+  padding:8px 10px;
+  font-weight:800; font-size:12px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:#fff !important; color:#1F55A4 !important; border:1px solid #7B2BFF !important;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
@@ -94,7 +106,7 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 응답 함수 (흰색 스피너, 출력은 루프에서만) -----------------
+# ----------------- 응답 함수 -----------------
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
     with st.spinner("🥔💭말감이 생각 중…"):
@@ -108,8 +120,8 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (3 × 3) -----------------
-st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
+# ----------------- 퀵칩 (버튼으로 전송, 3개씩) -----------------
+st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감🥔</div>', unsafe_allow_html=True)
 
 chips = [
   "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
@@ -117,19 +129,14 @@ chips = [
   "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# HTML Grid로 3열 고정 + 링크 클릭 → 쿼리파라미터 → 처리 후 제거
-html = ['<div class="chips-wrap"><div class="chip-grid">']
-for label in chips:
-    html.append(f'<div class="chip"><a href="?chip={quote(label)}" target="_self" title="클릭하면 바로 전송돼요">{label}</a></div>')
-html.append('</div></div>')
-st.markdown("".join(html), unsafe_allow_html=True)
-
-# 칩 클릭 처리 (흰색 스피너 포함)
-qp = st.query_params
-if "chip" in qp:
-    picked = unquote(qp["chip"])
-    send_and_stream(picked)        # 스피너 흰색으로 표시됨
-    del st.query_params["chip"]    # URL 정리 (새 탭 이동 없음)
+for i in range(0, len(chips), 3):
+    cols = st.columns(3)
+    for c, label in zip(cols, chips[i:i+3]):
+        with c:
+            st.markdown('<div class="chip-btn">', unsafe_allow_html=True)
+            if st.button(label, key=f"chip_{i}_{label}"):
+                send_and_stream(label)   # ✅ 페이지 리로드 없음
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:

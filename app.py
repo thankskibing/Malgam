@@ -32,47 +32,32 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right;}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left;}
 
-/* ===== 빠른 답변(칩) - 한 줄 고정 5등분 ===== */
+/* 빠른 답변 타이틀 */
 .quick-title{ font-size:15px; margin:4px 0 10px 2px; color:#fff; font-weight:700; }
 
-/* 한 줄, 줄바꿈 없음, 칩 사이 gap 10px */
-.quick-row{
-  display:flex; flex-wrap:nowrap; gap:10px; padding:4px 16px 14px;
-}
-/* 각 st.button 컨테이너를 동일 폭으로 */
-.quick-row .stButton{
-  flex:1 1 0;            /* 균등 분배 */
-  min-width:0;           /* 넘침 방지 */
-  margin:0;
-}
-/* 칩 버튼 스타일 (폭 100%) */
-.quick-row .stButton > button{
+/* 버튼 간격 10px을 위해 열 사이 마진 */
+.quick-row { margin: 0 16px 14px 16px; }
+.quick-col { padding-right:10px; }
+.quick-col:last-child { padding-right:0; }
+
+/* 칩 버튼 스타일 */
+.quick-col .stButton > button{
   width:100%;
   background:#FFFFFF !important;
   color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
   border-radius:999px !important;
-  padding:10px 0 !important;                 /* 좌우 여백 최소화로 텍스트 공간 확보 */
-  font-size:clamp(12px, 2.6vw, 14px) !important;  /* 화면폭에 맞춰 살짝 축소 */
-  font-weight:800 !important;
+  padding:10px 0 !important;
+  font-size:14px !important; font-weight:800 !important;
   box-shadow:0 2px 6px rgba(0,0,0,.08);
   text-shadow:none !important;
   transition: background-color .2s ease, transform .06s ease;
-  cursor:pointer;
 }
-.quick-row .stButton > button:hover{
+.quick-col .stButton > button:hover{
   background:#F5F1FF !important;
-  border-color:#7B2BFF !important;
-}
-.quick-row .stButton > button:active{ transform:scale(.98); }
-
-/* 보라 라운드 툴팁 */
-[data-testid="stTooltip"] div, div[role="tooltip"], [data-baseweb="tooltip"]{
-  background:#7B2BFF !important; color:#fff !important; border-radius:100px !important;
-  padding:6px 10px !important; box-shadow:0 6px 16px rgba(123,43,255,.25) !important; border:0 !important;
 }
 
-/* ===== 입력창 스타일 ===== */
+/* ===== 입력창 ===== */
 [data-testid="stChatInput"] {
   background-color:#F5F1FF !important;
   border-radius:999px !important;
@@ -120,11 +105,12 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 공통 전송 함수 -----------------
+# ----------------- OpenAI 응답 함수 (출력은 루프에서만!) -----------------
 def send_and_stream(user_text: str):
+    # 1) 유저 메시지 추가
     st.session_state.messages.append({"role":"user","content":user_text})
-    st.markdown(f'<div class="chat-bubble user-bubble">{user_text}</div>', unsafe_allow_html=True)
 
+    # 2) 모델 호출해서 전체 텍스트 획득
     stream = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=st.session_state.messages,
@@ -133,18 +119,25 @@ def send_and_stream(user_text: str):
     assistant_text = ""
     for chunk in stream:
         assistant_text += chunk.choices[0].delta.content or ""
-    st.markdown(f'<div class="chat-bubble assistant-bubble">{assistant_text}</div>', unsafe_allow_html=True)
+
+    # 3) 어시스턴트 메시지만 추가 (여기서 화면에 출력하지 않음!)
     st.session_state.messages.append({"role":"assistant","content":assistant_text})
 
-# ----------------- 빠른 답변(한 줄 5개, 클릭 즉시 전송) -----------------
+# ----------------- 빠른 답변(한 줄 5개, 간격 10, 클릭 즉시 전송) -----------------
 st.markdown('<p class="quick-title">아래 키워드로 물어볼 수도 있겠감</p>', unsafe_allow_html=True)
-
-quick_items = ["AI 기획서 작성", "툴 추천", "아이디어 확장", "AI 리서치", "피그마 사용법"]  # 정확히 5개
-
 st.markdown('<div class="quick-row">', unsafe_allow_html=True)
+
+quick_items = ["AI 기획서 작성", "툴 추천", "아이디어 확장", "AI 리서치", "피그마 사용법"]
+
+cols = st.columns(5)
 for i, label in enumerate(quick_items):
-    if st.button(label, key=f"quick_{i}", help="클릭하면 바로 전송돼요"):
-        send_and_stream(label)  # ✅ 즉시 전송
+    with cols[i]:
+        st.markdown('<div class="quick-col">', unsafe_allow_html=True)
+        if st.button(label, key=f"quick_{i}", help="클릭하면 바로 전송돼요"):
+            send_and_stream(label)
+            st.rerun()  # ✅ 즉시 다시 그려 중복 출력 방지
+        st.markdown('</div>', unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------- 인사 말풍선 (버튼 아래 1회) -----------------
@@ -152,7 +145,7 @@ if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
 
-# ----------------- 기존 메시지 렌더 -----------------
+# ----------------- 대화 렌더(여기서만 출력) -----------------
 for msg in st.session_state.messages:
     if msg["role"] == "system":
         continue
@@ -160,8 +153,10 @@ for msg in st.session_state.messages:
     st.markdown(f'<div class="chat-bubble {klass}">{msg["content"]}</div>', unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
-if prompt := st.chat_input("말감이에게 궁금한걸 말해보세요!"):
+prompt = st.chat_input("말감이에게 궁금한걸 말해보세요!")
+if prompt:
     send_and_stream(prompt)
+    st.rerun()  # ✅ 중복 없이 새 메시지까지 포함해 다시 그리기
 
 # ----------------- 카드 종료 -----------------
 st.markdown('</div>', unsafe_allow_html=True)

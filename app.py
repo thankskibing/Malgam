@@ -42,14 +42,14 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵버튼: 안내/레이아웃 ===== */
+/* ===== 퀵버튼 안내 ===== */
 .quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
 .chip-row { margin: 0 16px 10px 16px; }
 
 /* 버튼을 칩처럼(Pill) */
 .chip-btn .stButton>button{
   width:100%; height:40px;
-  border-radius:100px !important;       /* pill */
+  border-radius:100px !important;
   background:#fff !important; color:#1F55A4 !important;
   border:1px solid #7B2BFF !important;
   font-weight:800; font-size:12px;
@@ -65,7 +65,7 @@ st.markdown("""
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-/* 입력창(네 설정 유지) */
+/* 입력창(기존 유지) */
 [data-testid="stChatInput"]{
   background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;
   box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important
@@ -76,33 +76,31 @@ st.markdown("""
 }
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 
-/* ─────────── 핵심: chip-row 안의 st.columns를 ‘항상 3열’로 강제 ─────────── */
-/* (캡처 DOM 기준: stHorizontalBlock > stColumn > stVerticalBlock) */
-html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock{
+/* ─────────── 🔒 강제 3열 고정 (모든 st.columns 대상) ─────────── */
+/* Streamlit 내부 미디어쿼리를 전부 이겨버리기 위해 매우 높은 우선순위로 지정 */
+div[data-testid="stHorizontalBlock"].stHorizontalBlock{
   display:flex !important;
   flex-direction:row !important;
   flex-wrap:nowrap !important;
   gap:10px !important;
   align-items:stretch !important;
 }
-html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock
-  > div[data-testid="stColumn"].stColumn{
+div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn{
   padding:0 !important;
   flex:0 0 calc((100% - 20px)/3) !important;   /* 3열 (gap 10px × 2) */
   max-width:calc((100% - 20px)/3) !important;
   min-width:0 !important;
 }
-html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock
-  > div[data-testid="stColumn"].stColumn .stVerticalBlock{
+div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn .stVerticalBlock{
   height:auto !important;
 }
+
 /* 640px 이하에서도 한 번 더 못박기 */
 @media (max-width: 640px){
-  html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock{
+  div[data-testid="stHorizontalBlock"].stHorizontalBlock{
     display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:10px !important;
   }
-  html body .block-container .chip-row div[data-testid="stHorizontalBlock"].stHorizontalBlock
-    > div[data-testid="stColumn"].stColumn{
+  div[data-testid="stHorizontalBlock"].stHorizontalBlock > div[data-testid="stColumn"].stColumn{
     padding:0 !important; flex:0 0 calc((100% - 20px)/3) !important; max-width:calc((100% - 20px)/3) !important; min-width:0 !important;
   }
 }
@@ -154,13 +152,13 @@ chips = [
 ]
 
 for i in range(0, len(chips), 3):
-    st.markdown('<div class="chip-row">', unsafe_allow_html=True)  # 3열 강제 래퍼
+    st.markdown('<div class="chip-row">', unsafe_allow_html=True)
     cols = st.columns(3, gap="small")
     for c, label in zip(cols, chips[i:i+3]):
         with c:
             st.markdown('<div class="chip-btn">', unsafe_allow_html=True)
             if st.button(label, key=f"chip_{i}_{label}", use_container_width=True):
-                send_and_stream(label)  # ✅ 리로드 없이 전송
+                send_and_stream(label)
             st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 

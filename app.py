@@ -135,7 +135,7 @@ def send_and_stream(user_text: str):
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
 # ----------------- 퀵칩 (3 × 3) - CSS Grid로 강제 3열 유지 -----------------
-st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
+st.markdown('<div class="quick-title">아래 키워드로 물어보라감</div>', unsafe_allow_html=True)
 
 chips = [
     "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
@@ -220,7 +220,7 @@ for m in st.session_state.messages:
     st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
-if txt := st.chat_input("말감이가 기다리는 중!🥔"):
+if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):
     send_and_stream(txt)
 
 # ----------------- 카드 종료 -----------------

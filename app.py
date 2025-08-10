@@ -83,8 +83,13 @@ st.markdown("""
 }
 
 /* 히든 input 숨기기 */
-input[data-testid*="hidden_chip_receiver"] {
+input[data-testid*="chip_receiver"], 
+div[data-testid*="chip_receiver"] {
   display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
@@ -135,15 +140,6 @@ def send_and_stream(user_text: str):
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
 # ----------------- 퀵칩 (3 × 3) - CSS Grid로 강제 3열 유지 -----------------
-st.markdown('<div class="quick-title">아래 키워드로 물어보라감</div>', unsafe_allow_html=True)
-
-chips = [
-    "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
-    "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
-    "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
-]
-
-# ----------------- 퀵칩 (3 × 3) - HTML 버튼으로 직접 구현 -----------------
 st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
@@ -152,54 +148,48 @@ chips = [
     "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# HTML 버튼으로 직접 구현
-html_buttons = ['<div class="chips-wrap"><div class="chip-grid">']
+# ----------------- 퀵칩 (3 × 3) - 간단한 HTML 버튼 -----------------
+st.markdown('<div class="quick-title">아래 키워드로 물어보겠감</div>', unsafe_allow_html=True)
+
+chips = [
+    "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
+    "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
+    "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
+]
+
+# 간단한 HTML 버튼으로 구현
+chip_html = """
+<div class="chips-wrap">
+    <div class="chip-grid">"""
+
 for i, chip in enumerate(chips):
-    # 각 버튼에 data-chip 속성으로 텍스트 저장
-    html_buttons.append(f'''
-    <div class="chip">
-        <button class="chip-btn" data-chip="{chip}" onclick="handleChipClick('{chip}')">
-            {chip}
-        </button>
+    chip_html += f"""
+        <div class="chip">
+            <button class="chip-btn" onclick="document.getElementById('chip_value').value='{chip}'; document.getElementById('chip_value').dispatchEvent(new Event('input'));">
+                {chip}
+            </button>
+        </div>"""
+
+chip_html += """
     </div>
-    ''')
-html_buttons.append('</div></div>')
+</div>
+<input type="hidden" id="chip_value" />
+"""
 
-# JavaScript 처리 함수
-html_buttons.append('''
-<script>
-let selectedChip = null;
+st.markdown(chip_html, unsafe_allow_html=True)
 
-function handleChipClick(chipText) {
-    selectedChip = chipText;
-    // 히든 input에 값 설정
-    const hiddenInput = document.getElementById('hidden_chip_input');
-    if (hiddenInput) {
-        hiddenInput.value = chipText;
-        hiddenInput.dispatchEvent(new Event('input'));
-    }
-}
+# 히든 값 받기 - 더 간단한 방법
+if "chip_clicked" not in st.session_state:
+    st.session_state.chip_clicked = ""
 
-// 페이지 로드 시 히든 input 생성
-document.addEventListener('DOMContentLoaded', function() {
-    if (!document.getElementById('hidden_chip_input')) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.id = 'hidden_chip_input';
-        document.body.appendChild(input);
-    }
-});
-</script>
-''')
+# JavaScript로 전달된 값 받기
+chip_value = st.text_input("", key="chip_receiver", label_visibility="collapsed", placeholder="")
 
-st.markdown(''.join(html_buttons), unsafe_allow_html=True)
-
-# 히든 input으로 값 받기
-selected_chip_value = st.text_input("", key="hidden_chip_receiver", label_visibility="hidden")
-if selected_chip_value and selected_chip_value in [chip for chip in chips]:
-    st.session_state.selected_chip = selected_chip_value
-    # input 초기화
-    st.session_state.hidden_chip_receiver = ""
+if chip_value and chip_value != st.session_state.chip_clicked:
+    st.session_state.selected_chip = chip_value
+    st.session_state.chip_clicked = chip_value
+    # 입력창 초기화
+    st.session_state.chip_receiver = ""
     st.rerun()
 
 # 선택된 칩 처리

@@ -1,5 +1,6 @@
 from openai import OpenAI
 import streamlit as st
+from urllib.parse import quote, unquote
 from pathlib import Path
 import base64
 
@@ -7,13 +8,14 @@ import base64
 st.set_page_config(page_title="말감 챗봇", page_icon="🥔", layout="centered")
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# ----------------- 로고(Base64) -----------------
+# ----------------- 로고(Base64 인라인) -----------------
 def logo_tag(path="logo.png"):
     p = Path(path)
     if not p.exists():
         for c in [Path("static")/path, Path("assets")/path, Path("app/static")/path]:
             if c.exists():
-                p = c; break
+                p = c
+                break
     if not p.exists():
         return '<span class="logo-missing"></span>'
     data = base64.b64encode(p.read_bytes()).decode()
@@ -23,100 +25,61 @@ def logo_tag(path="logo.png"):
 # ----------------- 스타일 -----------------
 st.markdown("""
 <style>
-/* 헤더/배경 */
+/* 헤더 숨기기 + 배경 */
 [data-testid="stHeader"]{display:none;}
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
 .block-container{padding-top:0!important}
 
-/* 상단 바 + 언더라인 */
-.topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 6px}
+/* 상단 바 (로고 + 타이틀) */
+.topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 8px}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
 .topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
 @media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
-.top-accent{height:2px;margin:6px 16px 10px;background:rgba(255,255,255,.9);border-radius:999px;}
 
 /* 카드 */
-.chat-card{
-  background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.12);
-  padding:14px 16px 6px; margin:6px 12px 8px;
-}
+.chat-card{background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.12);padding:16px 16px 8px;margin:8px 12px 20px}
 
 /* 말풍선 */
-.chat-bubble{display:block;clear:both;max-width:80%;padding:12px 16px;border-radius:16px;margin:10px 0;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.chat-bubble{display:block;clear:both;max-width:80%;padding:12px 16px;border-radius:16px;margin:12px 0;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵칩: 버튼 3×3 강제 ===== */
-.quick-title{color:#fff;font-weight:700;margin:8px 0 6px 16px}
-.chips-wrap{margin:0 16px 16px}
-.quick-row{margin-bottom:10px;}
-/* 🔒 Streamlit의 모바일 1열 변환을 무력화 */
-.quick-row [data-testid="stHorizontalBlock"]{
-  display:flex!important; flex-wrap:nowrap!important; gap:10px!important;
+/* ===== 퀵칩: 전 해상도 3열 × 3줄 고정 ===== */
+.quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
+.chips-wrap{margin:0 16px 18px 16px}
+.chip-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));  /* 항상 3열 유지 */
+  gap:10px;
 }
-.quick-row [data-testid="stHorizontalBlock"] > div,          /* st.columns 내부 div */
-.quick-row [data-testid="column"]{                            /* 호환용 */
-  padding:0!important;
-  flex:0 0 calc((100% - 20px)/3)!important;  /* 3열 고정 (gap 10px*2) */
-  max-width:calc((100% - 20px)/3)!important;
+.chip{display:flex}
+.chip a{
+  flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center;
+  text-decoration:none; background:#fff; color:#1F55A4; border:1px solid #7B2BFF;
+  border-radius:100px; padding:8px 10px;            /* ⬅ 패딩 소폭 축소 */
+  font-weight:800; font-size:12px;                  /* ⬅ 12px로 축소 */
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;  /* 줄바꿈 방지 */
+  box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
+  cursor:pointer;
 }
+.chip a:hover{background:#F5F1FF}
+.chip a:active{transform:scale(.98)}
 
-/* 칩 버튼 (아이콘+텍스트 여유 있게) */
-.quick-btn .stButton>button{
-  width:100%; border-radius:100px;
-  padding:10px 14px;
-  font-size:clamp(12px,3.5vw,13px); font-weight:800;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  background:#fff!important; color:#1F55A4!important; border:1px solid #7B2BFF!important;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
-  transition:background-color .2s, transform .06s;
-}
-.quick-btn .stButton>button:hover{background:#F5F1FF!important;}
-.quick-btn .stButton>button:active{transform:scale(.98);}
+/* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
+[data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
+[data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
+[data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-/* 스피너 흰색 */
-[data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF!important;}
-[data-testid="stSpinner"] svg circle{stroke:#FFFFFF!important;}
-[data-testid="stSpinner"] svg path{stroke:#FFFFFF!important; fill:#FFFFFF!important;}
-
-/* ===== 입력창: 흰 배경 완전 제거 + 보라 말풍선(그라데이션) ===== */
-[data-testid="stChatInput"]{
-  background:linear-gradient(135deg,#8A39FF 0%, #7B2BFF 60%, #6C22FF 100%)!important;
-  border:1px solid rgba(255,255,255,.45)!important;
-  border-radius:999px!important;
-  box-shadow:0 8px 24px rgba(123,43,255,.35)!important;
-  margin:12px 16px 14px!important;
-  padding:8px 12px!important;
-  position:relative; z-index:1;
-}
-/* 내부 래퍼 전부 투명화 (버전별 레이어 대응) */
-[data-testid="stChatInput"] > div,
-[data-testid="stChatInput"] > div *:not(button):not(svg):not(path){
-  background:transparent!important; border:none!important; box-shadow:none!important; border-radius:0!important;
-}
-/* 혹시 상단에 중복 생성되면 첫 번째 것은 숨김 */
-[data-testid="stChatInput"]:not(:last-of-type){display:none!important;}
-
-[data-testid="stChatInput"]:focus-within{
-  border:2px solid rgba(255,255,255,.9)!important;
-  box-shadow:0 10px 28px rgba(123,43,255,.45)!important;
-}
-[data-testid="stChatInput"] textarea,
-[data-testid="stChatInput"] input,
-[data-testid="stChatInput"] div[contenteditable="true"],
-[data-testid="stChatInput"] div[role="textbox"]{
-  background:transparent!important; border:none!important; outline:none!important; box-shadow:none!important;
-  color:#1B1B1B!important; font-size:16px!important;
-}
-[data-testid="stChatInput"] ::placeholder{ color:rgba(27,27,27,.55)!important; }
-[data-testid="stChatInput"] button{ background:transparent!important; }
-[data-testid="stChatInput"] button svg path{ fill:#FFFFFF!important; }
+/* 입력창 */
+[data-testid="stChatInput"]{background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
+[data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
+[data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
+[data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------- 상단 바 + 언더라인 -----------------
+# ----------------- 상단 바 -----------------
 st.markdown(f'<div class="topbar">{logo_tag("logo.png")}<h1>말감 챗봇</h1></div>', unsafe_allow_html=True)
-st.markdown('<div class="top-accent"></div>', unsafe_allow_html=True)
 
 # ----------------- 카드 시작 -----------------
 st.markdown('<div class="chat-card">', unsafe_allow_html=True)
@@ -131,7 +94,7 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 응답 함수 -----------------
+# ----------------- 응답 함수 (흰색 스피너, 출력은 루프에서만) -----------------
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
     with st.spinner("🥔💭말감이 생각 중…"):
@@ -145,41 +108,44 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# 1) 환영 말풍선
+# ----------------- 퀵칩 (3 × 3) -----------------
+st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
+
+chips = [
+    "AI 기획서 작성","툴 추천","아이디어 확장",
+    "AI 리서치","피그마 사용법","노션 사용법",
+    "프로토타입 팁","UX 리서치 설계","프롬프트 가이드"
+]
+
+# HTML Grid로 3열 고정 + 링크 클릭 → 쿼리파라미터 → 처리 후 제거
+html = ['<div class="chips-wrap"><div class="chip-grid">']
+for label in chips:
+    html.append(f'<div class="chip"><a href="?chip={quote(label)}" target="_self" title="클릭하면 바로 전송돼요">{label}</a></div>')
+html.append('</div></div>')
+st.markdown("".join(html), unsafe_allow_html=True)
+
+# 칩 클릭 처리 (흰색 스피너 포함)
+qp = st.query_params
+if "chip" in qp:
+    picked = unquote(qp["chip"])
+    send_and_stream(picked)        # 스피너 흰색으로 표시됨
+    del st.query_params["chip"]    # URL 정리 (새 탭 이동 없음)
+
+# ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
 
-# 2) 퀵버튼 (버튼 방식, 3×3 고정)
-st.markdown('<div class="quick-title">🥔아래 키워드 눌러서 물어보라감🥔</div>', unsafe_allow_html=True)
-
-chips = [
-    "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
-    "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
-    "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
-]
-
-for start in range(0, len(chips), 3):
-    st.markdown('<div class="chips-wrap"><div class="quick-row">', unsafe_allow_html=True)
-    cols = st.columns(3)  # CSS로 3열 강제
-    for col, label in zip(cols, chips[start:start+3]):
-        with col:
-            st.markdown('<div class="quick-btn">', unsafe_allow_html=True)
-            if st.button(label, key=f"chip_{start}_{label}", help="클릭하면 바로 전송돼요"):
-                send_and_stream(label)   # 페이지 리로드 없음 → 번쩍임 X
-            st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div></div>', unsafe_allow_html=True)
-
-# 3) 대화 렌더
+# ----------------- 대화 렌더 -----------------
 for m in st.session_state.messages:
     if m["role"] == "system":
         continue
-    klass = "user-bubble" if m["role"] == "user" else "assistant-bubble"
-    st.markdown(f'<div class="{klass} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
+    cls = "user-bubble" if m["role"] == "user" else "assistant-bubble"
+    st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
-# 4) 입력창
-if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):
+# ----------------- 입력창 -----------------
+if txt := st.chat_input("말감이가 기다리는 중!🥔"):
     send_and_stream(txt)
 
-# 카드 종료
+# ----------------- 카드 종료 -----------------
 st.markdown('</div>', unsafe_allow_html=True)

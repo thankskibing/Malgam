@@ -44,19 +44,26 @@ st.markdown("""
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
-/* ===== 퀵칩 타이틀 ===== */
-.quick-title{color:#fff;font-weight:700;margin:4px 0 8px 18px}
-
-/* ===== (선택) 버튼 모양 살짝 다듬기 ===== */
-.quick-btn .stButton>button{
-  width:100%;
-  border-radius:100px;
-  padding:8px 10px;
-  font-weight:800; font-size:11px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  background:#fff !important; color:#1F55A4 !important; border:1px solid #7B2BFF !important;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
+/* ===== 퀵칩: 전 해상도 3열 × 3줄 고정 ===== */
+.quick-title{color:#fff;font-weight:700;margin:4px 0 8px 16px}
+.chips-wrap{margin:0 16px 18px 16px}
+.chip-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));  /* 항상 3열 유지 */
+  gap:10px;
 }
+.chip{display:flex}
+.chip a{
+  flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center;
+  text-decoration:none; background:#fff; color:#1F55A4; border:1px solid #7B2BFF;
+  border-radius:100px; padding:8px 10px;            /* ⬅ 패딩 소폭 축소 */
+  font-weight:800; font-size:12px;                  /* ⬅ 12px로 축소 */
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;  /* 줄바꿈 방지 */
+  box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
+  cursor:pointer;
+}
+.chip a:hover{background:#F5F1FF}
+.chip a:active{transform:scale(.98)}
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}

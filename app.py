@@ -51,18 +51,6 @@ st.markdown("""
   grid-template-columns:repeat(3,minmax(0,1fr));  /* 항상 3열 유지 */
   gap:10px;
 }
-.chip{display:flex}
-.chip button{
-  flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center;
-  background:#fff; color:#1F55A4; border:1px solid #7B2BFF;
-  border-radius:100px; padding:8px 10px;            
-  font-weight:800; font-size:12px;                  
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;  
-  box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
-  cursor:pointer;
-}
-.chip button:hover{background:#F5F1FF}
-.chip button:active{transform:scale(.98)}
 
 /* ===== 스피너(말감이 생각 중…) 완전 흰색 ===== */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
@@ -74,26 +62,33 @@ st.markdown("""
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
-</style>
 
-<script>
-function sendQuickChip(text) {
-    // Streamlit의 입력창을 찾아서 텍스트 입력 후 전송
-    const chatInput = document.querySelector('[data-testid="stChatInput"] textarea');
-    const sendButton = document.querySelector('[data-testid="stChatInput"] button');
-    
-    if (chatInput && sendButton) {
-        // 텍스트 입력
-        chatInput.value = text;
-        chatInput.dispatchEvent(new Event('input', { bubbles: true }));
-        
-        // 잠깐 기다린 후 전송 버튼 클릭
-        setTimeout(() => {
-            sendButton.click();
-        }, 100);
-    }
+/* 퀵칩 버튼 스타일 */
+.stButton > button {
+  background:#fff !important; 
+  color:#1F55A4 !important; 
+  border:1px solid #7B2BFF !important;
+  border-radius:100px !important; 
+  padding:8px 10px !important;            
+  font-weight:800 !important; 
+  font-size:12px !important;                  
+  white-space:nowrap !important; 
+  overflow:hidden !important; 
+  text-overflow:ellipsis !important;  
+  box-shadow:0 2px 6px rgba(0,0,0,.08) !important; 
+  transition:background-color .2s, transform .06s !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: auto !important;
 }
-</script>
+.stButton > button:hover {
+  background:#F5F1FF !important;
+  transform:scale(.98) !important;
+}
+.stButton > button:focus {
+  box-shadow: 0 0 8px rgba(123,43,255,.35) !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 # ----------------- 상단 바 -----------------
@@ -111,6 +106,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = [{"role":"system","content":SYSTEM}]
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
+if "selected_chip" not in st.session_state:
+    st.session_state.selected_chip = None
 
 # ----------------- 응답 함수 (흰색 스피너, 출력은 루프에서만) -----------------
 def send_and_stream(user_text: str):
@@ -126,21 +123,33 @@ def send_and_stream(user_text: str):
             assistant += ch.choices[0].delta.content or ""
         st.session_state.messages.append({"role":"assistant","content":assistant})
 
-# ----------------- 퀵칩 (3 × 3) -----------------
+# ----------------- 퀵칩 (3 × 3) - Streamlit 버튼 사용 -----------------
 st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
-  "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
-  "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
-  "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
+    "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
+    "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
+    "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
 ]
 
-# JavaScript로 처리하는 버튼들 - 리로드 없음
-html = ['<div class="chips-wrap"><div class="chip-grid">']
-for label in chips:
-    html.append(f'<div class="chip"><button onclick="sendQuickChip(\'{label}\')" title="클릭하면 바로 전송돼요">{label}</button></div>')
-html.append('</div></div>')
-st.markdown("".join(html), unsafe_allow_html=True)
+st.markdown('<div class="chips-wrap">', unsafe_allow_html=True)
+
+# 3x3 그리드로 버튼 배치
+col1, col2, col3 = st.columns(3)
+columns = [col1, col2, col3]
+
+for i, chip in enumerate(chips):
+    with columns[i % 3]:
+        if st.button(chip, key=f"chip_{i}"):
+            st.session_state.selected_chip = chip
+            st.rerun()  # 페이지 새로고침으로 처리
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 선택된 칩 처리
+if st.session_state.selected_chip:
+    send_and_stream(st.session_state.selected_chip)
+    st.session_state.selected_chip = None  # 처리 후 초기화
 
 # ----------------- 환영 메시지 (칩 아래 1회) -----------------
 if not st.session_state.welcome_shown:

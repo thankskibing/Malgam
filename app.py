@@ -305,35 +305,44 @@ chip_data = [
     "🎯 페르소나 만들기"
 ]
 
+# 하단 고정 버튼을 위한 키 상태 관리
+if "selected_chip" not in st.session_state:
+    st.session_state.selected_chip = None
+
+# JavaScript로 클릭 감지
+st.markdown("""
+<script>
+window.chipClick = function(chipText) {
+    window.parent.postMessage({
+        type: 'streamlit:chipClicked',
+        data: chipText
+    }, '*');
+}
+</script>
+""", unsafe_allow_html=True)
+
 # 하단 고정 버튼 HTML 생성
 button_html = """
 <div class="quick-title-fixed">아래 키워드를 선택해 물어보라감 👇</div>
 <div class="bottom-button-container">
-    <div class="button-scroll-wrapper">
+    <div class="button-scroll-wrapper" id="buttonWrapper">
 """
 
 for i, chip in enumerate(chip_data):
+    # HTML 특수문자 이스케이프
+    safe_chip = chip.replace("'", "&#39;").replace('"', '&quot;')
     button_html += f'''
         <button class="quick-button" 
+                data-chip="{safe_chip}"
                 onclick="
-                    const input = parent.document.querySelector('[data-testid=stChatInput] textarea');
-                    if (!input) {{
-                        const input2 = parent.document.querySelector('[data-testid=stChatInput] input');
-                        if (input2) {{
-                            input2.value = '{chip}';
-                            input2.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                            setTimeout(() => {{
-                                const submitBtn = parent.document.querySelector('[data-testid=stChatInput] button[kind=primary]');
-                                if (submitBtn) submitBtn.click();
-                            }}, 100);
-                        }}
-                    }} else {{
-                        input.value = '{chip}';
-                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                        setTimeout(() => {{
-                            const submitBtn = parent.document.querySelector('[data-testid=stChatInput] button[kind=primary]');
-                            if (submitBtn) submitBtn.click();
-                        }}, 100);
+                    const textarea = document.querySelector('[data-testid=stChatInput] textarea');
+                    const input = document.querySelector('[data-testid=stChatInput] input');
+                    const target = textarea || input;
+                    if (target) {{
+                        target.value = '{safe_chip}';
+                        target.focus();
+                        target.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        target.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', bubbles: true }}));
                     }}
                 ">
             {chip}
@@ -343,12 +352,19 @@ for i, chip in enumerate(chip_data):
 button_html += """
     </div>
 </div>
+"""
 
+st.markdown(button_html, unsafe_allow_html=True)
+
+# JavaScript를 별도 컴포넌트로 추가
+st.components.v1.html("""
 <script>
-// 터치 스크롤 개선 및 드래그 기능
-document.addEventListener('DOMContentLoaded', function() {
-    const wrapper = document.querySelector('.button-scroll-wrapper');
-    if (wrapper) {
+(function() {
+    // 터치 스크롤 개선 및 드래그 기능
+    function initScrollBehavior() {
+        const wrapper = document.getElementById('buttonWrapper');
+        if (!wrapper) return;
+        
         let isDown = false;
         let startX;
         let scrollLeft;
@@ -382,11 +398,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // 기본 커서 스타일
         wrapper.style.cursor = 'grab';
     }
-});
-</script>
-"""
 
-st.markdown(button_html, unsafe_allow_html=True)
+    // DOM이 로드된 후 실행
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScrollBehavior);
+    } else {
+        initScrollBehavior();
+    }
+    
+    // Streamlit이 다시 렌더링될 때를 대비
+    setTimeout(initScrollBehavior, 100);
+})();
+</script>
+""", height=0)
 
 # ----------------- 입력창 -----------------
 if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):

@@ -48,7 +48,7 @@ st.markdown("""
 /* 헤더 숨기기 + 배경 */
 [data-testid="stHeader"]{display:none;}
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
-.block-container{padding-top:0!important}
+.block-container{padding-top:0!important;padding-bottom:120px!important} /* 하단 버튼 공간 */
 
 /* 상단 바 */
 .topbar{
@@ -85,27 +85,140 @@ st.markdown("""
 /* 말풍선 하단 시간 — 항상 오른쪽 정렬 */
 .chat-footer{font-size:12px;color:#EDE7FF;margin:6px 8px 0 8px;text-align:right}
 
-/* 퀵칩 */
-.quick-title{color:#fff;font-weight:800;margin:16px 0 10px 16px;font-size:20px}
-.stButton > button {
-  background:#fff !important; color:#1F55A4 !important; border:1px solid #7B2BFF !important;
-  border-radius:100px !important; padding:8px 10px !important; font-weight:800 !important; 
-  font-size:12px !important; white-space:nowrap !important; overflow:hidden !important;
-  text-overflow:ellipsis !important; box-shadow:0 2px 6px rgba(0,0,0,.08) !important;
-  transition:background-color .2s, transform .06s !important; cursor:pointer !important;
-  width:100% !important; min-height:40px !important;
-}
-.stButton > button:hover{ background:#F5F1FF !important; }
-.stButton > button:active{ transform:scale(.98) !important; }
-
 /* 스피너/입력창 */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
-[data-testid="stChatInput"]{background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
+[data-testid="stChatInput"]{background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important;margin-bottom:80px!important}
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
+
+/* 하단 고정 버튼 컨테이너 */
+.bottom-button-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(123, 43, 255, 0.2);
+    padding: 12px 0;
+    z-index: 1000;
+    box-shadow: 0 -4px 20px rgba(123, 43, 255, 0.15);
+}
+
+/* 스크롤 가능한 버튼 래퍼 */
+.button-scroll-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+/* 스크롤바 스타일링 */
+.button-scroll-wrapper::-webkit-scrollbar {
+    height: 3px;
+}
+.button-scroll-wrapper::-webkit-scrollbar-track {
+    background: rgba(123, 43, 255, 0.1);
+    border-radius: 2px;
+}
+.button-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(123, 43, 255, 0.4);
+    border-radius: 2px;
+}
+.button-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(123, 43, 255, 0.6);
+}
+
+/* 퀵 버튼 스타일 */
+.quick-button {
+    display: inline-block;
+    background: linear-gradient(135deg, #7B2BFF 0%, #A04DFF 100%);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    margin-right: 8px;
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(123, 43, 255, 0.3);
+    min-width: 100px;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.quick-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(123, 43, 255, 0.4);
+    background: linear-gradient(135deg, #8A39FF 0%, #B15EFF 100%);
+}
+
+.quick-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(123, 43, 255, 0.3);
+}
+
+/* 마지막 버튼 마진 */
+.quick-button:last-child {
+    margin-right: 16px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .bottom-button-container {
+        padding: 10px 0;
+    }
+    .quick-button {
+        padding: 8px 12px;
+        font-size: 12px;
+        min-width: 80px;
+        margin-right: 6px;
+    }
+    .button-scroll-wrapper {
+        padding: 0 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-button {
+        padding: 7px 10px;
+        font-size: 11px;
+        min-width: 70px;
+    }
+}
+
+/* 버튼 제목 */
+.quick-title-fixed {
+    position: fixed;
+    bottom: 65px;
+    left: 16px;
+    right: 16px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    text-align: center;
+    z-index: 999;
+    background: rgba(123, 43, 255, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 6px 12px;
+    border-radius: 12px;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .quick-title-fixed {
+        font-size: 14px;
+        bottom: 55px;
+        padding: 4px 8px;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -176,29 +289,104 @@ for m in st.session_state.messages:
 </div>
 ''', unsafe_allow_html=True)
 
-# ----------------- 퀵칩 -----------------
-st.markdown('<div class="quick-title">아래 키워드를 선택해 물어보라감</div>', unsafe_allow_html=True)
-chip_data = ["👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천","💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"]
-col1,col2,col3 = st.columns(3)
-with col1:
-    if st.button(chip_data[0], key="chip_0", use_container_width=True):
-        send_and_stream(chip_data[0]); st.rerun()
-with col2:
-    if st.button(chip_data[1], key="chip_1", use_container_width=True):
-        send_and_stream(chip_data[1]); st.rerun()
-with col3:
-    if st.button(chip_data[2], key="chip_2", use_container_width=True):
-        send_and_stream(chip_data[2]); st.rerun()
-col4,col5,col6 = st.columns(3)
-with col4:
-    if st.button(chip_data[3], key="chip_3", use_container_width=True):
-        send_and_stream(chip_data[3]); st.rerun()
-with col5:
-    if st.button(chip_data[4], key="chip_4", use_container_width=True):
-        send_and_stream(chip_data[4]); st.rerun()
-with col6:
-    if st.button(chip_data[5], key="chip_5", use_container_width=True):
-        send_and_stream(chip_data[5]); st.rerun()
+# ----------------- 하단 고정 스크롤 버튼 -----------------
+chip_data = [
+    "👥 UX 리서치 설계",
+    "📝 AI 기획서 작성", 
+    "🛠️ 툴 추천",
+    "💬 프롬프트 가이드",
+    "🎨 피그마 사용법",
+    "📄 노션 사용법",
+    "📊 사용자 조사 방법",
+    "🔍 경쟁사 분석",
+    "📱 모바일 UX 패턴",
+    "💡 아이디어 발상법",
+    "🏗️ 정보 구조 설계",
+    "🎯 페르소나 만들기"
+]
+
+# 하단 고정 버튼 HTML 생성
+button_html = """
+<div class="quick-title-fixed">아래 키워드를 선택해 물어보라감 👇</div>
+<div class="bottom-button-container">
+    <div class="button-scroll-wrapper">
+"""
+
+for i, chip in enumerate(chip_data):
+    button_html += f'''
+        <button class="quick-button" 
+                onclick="
+                    const input = parent.document.querySelector('[data-testid=stChatInput] textarea');
+                    if (!input) {{
+                        const input2 = parent.document.querySelector('[data-testid=stChatInput] input');
+                        if (input2) {{
+                            input2.value = '{chip}';
+                            input2.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            setTimeout(() => {{
+                                const submitBtn = parent.document.querySelector('[data-testid=stChatInput] button[kind=primary]');
+                                if (submitBtn) submitBtn.click();
+                            }}, 100);
+                        }}
+                    }} else {{
+                        input.value = '{chip}';
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        setTimeout(() => {{
+                            const submitBtn = parent.document.querySelector('[data-testid=stChatInput] button[kind=primary]');
+                            if (submitBtn) submitBtn.click();
+                        }}, 100);
+                    }}
+                ">
+            {chip}
+        </button>
+    '''
+
+button_html += """
+    </div>
+</div>
+
+<script>
+// 터치 스크롤 개선 및 드래그 기능
+document.addEventListener('DOMContentLoaded', function() {
+    const wrapper = document.querySelector('.button-scroll-wrapper');
+    if (wrapper) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        // 마우스 이벤트
+        wrapper.addEventListener('mousedown', (e) => {
+            isDown = true;
+            wrapper.style.cursor = 'grabbing';
+            startX = e.pageX - wrapper.offsetLeft;
+            scrollLeft = wrapper.scrollLeft;
+        });
+
+        wrapper.addEventListener('mouseleave', () => {
+            isDown = false;
+            wrapper.style.cursor = 'grab';
+        });
+
+        wrapper.addEventListener('mouseup', () => {
+            isDown = false;
+            wrapper.style.cursor = 'grab';
+        });
+
+        wrapper.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - wrapper.offsetLeft;
+            const walk = (x - startX) * 2;
+            wrapper.scrollLeft = scrollLeft - walk;
+        });
+
+        // 기본 커서 스타일
+        wrapper.style.cursor = 'grab';
+    }
+});
+</script>
+"""
+
+st.markdown(button_html, unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
 if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):

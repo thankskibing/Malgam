@@ -25,43 +25,66 @@ def logo_tag(path="logo.png"):
 # ----------------- 스타일 -----------------
 st.markdown("""
 <style>
+:root{
+  --chat-input-h: 64px;   /* 데스크톱 입력창 추정 높이 */
+  --chips-h: 120px;       /* 퀵칩 영역 높이(타이틀+칩 2줄 가정) */
+}
+
+/* 헤더 숨기기 + 배경 */
 [data-testid="stHeader"]{display:none;}
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
-.block-container{padding-top:0!important}
+/* 퀵칩/입력창 때문에 가려지지 않도록 하단 패딩 확보 */
+.block-container{
+  padding-top:0!important;
+  padding-bottom: calc(var(--chips-h) + var(--chat-input-h) + 16px) !important;
+}
 
+/* 상단 바 */
 .topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 8px}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
 .topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
 @media (max-width:480px){ .topbar img{height:28px;max-width:90px;} }
 
-.chat-card{background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.12);padding:16px 16px 8px;margin:8px 12px 100px} /* 아래쪽 여백을 크게 줘야 버튼과 안 겹침 */
+/* 카드 */
+.chat-card{
+  background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.12);
+  padding:16px 16px 8px;margin:8px 12px 24px;
+}
 
+/* 말풍선 */
 .chat-bubble{display:block;clear:both;max-width:80%;padding:12px 16px;border-radius:16px;margin:12px 0;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .user-bubble{background:#DCF8C6;float:right;text-align:right}
 .assistant-bubble{background:#F1F0F0;float:left;text-align:left}
 
+/* 스피너(흰색) */
 [data-testid="stSpinner"], [data-testid="stSpinner"] * {color:#FFFFFF !important;}
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-[data-testid="stChatInput"]{background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important}
+/* 입력창: 항상 최상단으로 보이게 */
+[data-testid="stChatInput"]{
+  position: fixed; left: 0; right: 0; bottom: 0;
+  z-index: 10002;  /* 퀵칩보다 위 */
+  background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;
+  box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important
+}
 [data-testid="stChatInput"]:focus-within{border:2px solid #7B2BFF!important;box-shadow:0 0 8px rgba(123,43,255,.35)!important}
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 
-/* ===== 퀵칩: 화면 하단 고정 ===== */
-.chips-fixed {
+/* ===== 퀵칩: 입력창 바로 위에 고정 ===== */
+.chips-fixed{
   position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  left: 0; right: 0;
+  bottom: var(--chat-input-h);   /* 입력창 높이만큼 위로 */
+  z-index: 10001;                /* 입력창 아래, 본문 위 */
   background: linear-gradient(180deg,#7B2BFF 0%,#8A39FF 60%,#A04DFF 100%);
-  padding: 12px 16px 18px;
+  padding: 12px 16px 14px;
   box-shadow: 0 -4px 12px rgba(0,0,0,.15);
-  z-index: 9999;
 }
 .chips-fixed .quick-title{color:#fff;font-weight:700;margin:0 0 8px 4px}
 .chips-fixed .chip-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.chips-fixed .chip{display:flex}
 .chips-fixed .chip a{
   flex:1;display:inline-flex;align-items:center;justify-content:center;
   text-decoration:none;background:#fff;color:#1F55A4;border:1px solid #7B2BFF;
@@ -71,6 +94,11 @@ st.markdown("""
 }
 .chips-fixed .chip a:hover{background:#F5F1FF}
 .chips-fixed .chip a:active{transform:scale(.98)}
+
+/* 모바일: 입력창 높이가 더 커지는 경우 보정 */
+@media (max-width: 480px){
+  :root{ --chat-input-h: 76px; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -123,14 +151,14 @@ if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):
 # ----------------- 카드 종료 -----------------
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ----------------- 퀵칩 (화면 하단 고정) -----------------
+# ----------------- 퀵칩 (입력창 위 고정) -----------------
 chips = [
   "👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천",
   "💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"
 ]
 html = ['<div class="chips-fixed"><div class="quick-title">아래 키워드로 물어보라감</div><div class="chip-grid">']
 for label in chips:
-    html.append(f'<div class="chip"><a href="?chip={quote(label)}" target="_self">{label}</a></div>')
+    html.append(f'<div class="chip"><a href="?chip={quote(label)}" target="_self" title="클릭하면 바로 전송돼요">{label}</a></div>')
 html.append('</div></div>')
 st.markdown("".join(html), unsafe_allow_html=True)
 

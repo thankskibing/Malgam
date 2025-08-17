@@ -162,9 +162,27 @@ for label in chips:
 html.append('</div></div>')
 st.markdown("".join(html), unsafe_allow_html=True)
 
-# 칩 클릭 처리
+# ✅ 칩 클릭 처리 (데스크톱/모바일 공통 안정화)
 qp = st.query_params
-if "chip" in qp:
-    picked = unquote(qp["chip"])
-    send_and_stream(picked)
-    del st.query_params["chip"]
+raw = qp.get("chip", None)
+
+if raw:
+    # 데스크톱에서 ['값'] 형태일 수 있음 → 첫 요소만 사용
+    picked_raw = raw[0] if isinstance(raw, list) else raw
+    picked = unquote(picked_raw)
+
+    # 더블 전송 방지 락
+    if not st.session_state.get("_chip_lock"):
+        st.session_state["_chip_lock"] = True
+        send_and_stream(picked)
+
+    # 파라미터 제거 후 강제 리렌더 (다음 클릭 대비)
+    try:
+        if "chip" in st.query_params:
+            del st.query_params["chip"]
+    except Exception:
+        # 일부 버전 호환용: 전체 초기화
+        st.query_params.clear()
+
+    st.session_state["_chip_lock"] = False
+    st.rerun()

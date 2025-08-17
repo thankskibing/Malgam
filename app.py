@@ -26,14 +26,14 @@ def logo_tag(path="logo.png"):
 st.markdown("""
 <style>
 :root{
-  --chat-input-h: 64px;   /* 데스크톱 입력창 추정 높이 */
+  --chat-input-h: 64px;   /* 데스크톱 입력창 높이 추정 */
   --chips-h: 120px;       /* 퀵칩 영역 높이(타이틀+칩 2줄 가정) */
 }
 
 /* 헤더 숨기기 + 배경 */
 [data-testid="stHeader"]{display:none;}
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
-/* 퀵칩/입력창 때문에 가려지지 않도록 하단 패딩 확보 */
+/* 하단 고정 UI가 본문을 가리지 않도록 패딩 확보 */
 .block-container{
   padding-top:0!important;
   padding-bottom: calc(var(--chips-h) + var(--chat-input-h) + 16px) !important;
@@ -61,10 +61,10 @@ st.markdown("""
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-/* 입력창: 항상 최상단으로 보이게 */
+/* 입력창: 화면 하단 고정, 항상 칩보다 위로 */
 [data-testid="stChatInput"]{
   position: fixed; left: 0; right: 0; bottom: 0;
-  z-index: 10002;  /* 퀵칩보다 위 */
+  z-index: 10002;
   background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;
   box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important
 }
@@ -76,8 +76,8 @@ st.markdown("""
 .chips-fixed{
   position: fixed;
   left: 0; right: 0;
-  bottom: var(--chat-input-h);   /* 입력창 높이만큼 위로 */
-  z-index: 10001;                /* 입력창 아래, 본문 위 */
+  bottom: var(--chat-input-h);
+  z-index: 10001; /* 입력창 아래, 본문 위 */
   background: linear-gradient(180deg,#7B2BFF 0%,#8A39FF 60%,#A04DFF 100%);
   padding: 12px 16px 14px;
   box-shadow: 0 -4px 12px rgba(0,0,0,.15);
@@ -95,7 +95,7 @@ st.markdown("""
 .chips-fixed .chip a:hover{background:#F5F1FF}
 .chips-fixed .chip a:active{transform:scale(.98)}
 
-/* 모바일: 입력창 높이가 더 커지는 경우 보정 */
+/* 모바일: 입력창 높이가 더 큰 편 → 보정 */
 @media (max-width: 480px){
   :root{ --chat-input-h: 76px; }
 }
@@ -104,9 +104,6 @@ st.markdown("""
 
 # ----------------- 상단 바 -----------------
 st.markdown(f'<div class="topbar">{logo_tag("logo.png")}<h1>말감 챗봇</h1></div>', unsafe_allow_html=True)
-
-# ----------------- 카드 시작 -----------------
-st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
 # ----------------- 세션 -----------------
 SYSTEM = """#지침: 너는 ui/ux 기획, 디자인, 리서처 업무를 도와주는 말감이야.
@@ -118,9 +115,10 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 응답 함수 -----------------
+# ----------------- 응답 함수 (스트리밍 즉시 표시 + 완료 후 rerun) -----------------
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
+    ph = st.empty()  # 스트리밍용 자리
     with st.spinner("🥔💭말감이 생각 중…"):
         stream = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -129,24 +127,52 @@ def send_and_stream(user_text: str):
         )
         assistant = ""
         for ch in stream:
-            assistant += ch.choices[0].delta.content or ""
-        st.session_state.messages.append({"role":"assistant","content":assistant})
+            token = ch.choices[0].delta.content or ""
+            assistant += token
+            ph.markdown(f'<div class="assistant-bubble chat-bubble">{assistant}</div>', unsafe_allow_html=True)
+    st.session_state.messages.append({"role":"assistant","content":assistant})
+    ph.empty()
+    st.rerun()
 
-# ----------------- 환영 메시지 (카드 상단 1회) -----------------
+# ----------------- 카드 시작 -----------------
+st.markdown('<div class="chat-card">', unsafe_allow_html=True)
+
+# 환영 메시지
 if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
 
-# ----------------- 대화 렌더 -----------------
+# ========= (A) 텍스트 입력 선처리 =========
+user_text = st.chat_input("말감이가 질문 기다리는 중!🥔")
+if user_text:
+    send_and_stream(user_text)
+
+# ========= (B) 퀵칩 입력 선처리 (URL 파라미터) =========
+qp = st.query_params
+raw = qp.get("chip", None)
+if raw:
+    picked_raw = raw[0] if isinstance(raw, list) else raw
+    picked = unquote(picked_raw)
+    if not st.session_state.get("_chip_lock"):
+        st.session_state["_chip_lock"] = True
+        send_and_stream(picked)  # 내부에서 rerun 호출
+        st.session_state["_chip_lock"] = False
+    # 파라미터 정리 (예외 호환)
+    try:
+        if "chip" in st.query_params:
+            del st.query_params["chip"]
+    except Exception:
+        try:
+            st.query_params.clear()
+        except Exception:
+            pass
+
+# ----------------- 대화 렌더 (입력/칩 처리 후) -----------------
 for m in st.session_state.messages:
     if m["role"] == "system":
         continue
     cls = "user-bubble" if m["role"] == "user" else "assistant-bubble"
     st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
-
-# ----------------- 입력창 -----------------
-if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):
-    send_and_stream(txt)
 
 # ----------------- 카드 종료 -----------------
 st.markdown('</div>', unsafe_allow_html=True)
@@ -161,28 +187,3 @@ for label in chips:
     html.append(f'<div class="chip"><a href="?chip={quote(label)}" target="_self" title="클릭하면 바로 전송돼요">{label}</a></div>')
 html.append('</div></div>')
 st.markdown("".join(html), unsafe_allow_html=True)
-
-# ✅ 칩 클릭 처리 (데스크톱/모바일 공통 안정화)
-qp = st.query_params
-raw = qp.get("chip", None)
-
-if raw:
-    # 데스크톱에서 ['값'] 형태일 수 있음 → 첫 요소만 사용
-    picked_raw = raw[0] if isinstance(raw, list) else raw
-    picked = unquote(picked_raw)
-
-    # 더블 전송 방지 락
-    if not st.session_state.get("_chip_lock"):
-        st.session_state["_chip_lock"] = True
-        send_and_stream(picked)
-
-    # 파라미터 제거 후 강제 리렌더 (다음 클릭 대비)
-    try:
-        if "chip" in st.query_params:
-            del st.query_params["chip"]
-    except Exception:
-        # 일부 버전 호환용: 전체 초기화
-        st.query_params.clear()
-
-    st.session_state["_chip_lock"] = False
-    st.rerun()

@@ -115,23 +115,29 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ================= 전송 함수 (스트리밍 즉시 표시 + 완료 후 rerun) =================
+# ================= 전송 함수 (완성 후 한 번에 표시: 타자 효과 OFF) =================
 def send_and_stream(user_text: str):
+    # 1) 유저 메시지 저장
     st.session_state.messages.append({"role":"user","content":user_text})
-    ph = st.empty()  # 스트리밍 표시용 영역
+
+    # 2) 생성 중에는 스피너만 보이게 하고, 중간 출력은 하지 않음
     with st.spinner("🥔💭말감이 생각 중…"):
         stream = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=st.session_state.messages,
             stream=True,
         )
-        assistant = ""
+        chunks = []
         for ch in stream:
-            token = ch.choices[0].delta.content or ""
-            assistant += token
-            ph.markdown(f'<div class="assistant-bubble chat-bubble">{assistant}</div>', unsafe_allow_html=True)
+            token = ch.choices[0].delta.content
+            if token:
+                chunks.append(token)
+
+    # 3) 완성된 후에만 한 번에 추가/표시
+    assistant = "".join(chunks)
     st.session_state.messages.append({"role":"assistant","content":assistant})
-    ph.empty()
+
+    # 4) 새 상태로 즉시 재렌더
     st.rerun()
 
 # ================= 카드 시작 =================
@@ -172,7 +178,7 @@ if raw:
 # 다음 렌더에서만 실제 전송 실행 (URL 파라미터 없음 → 안정)
 if st.session_state.get("_pending_chip"):
     picked = st.session_state.pop("_pending_chip")
-    send_and_stream(picked)  # 내부에서 스트리밍 + 완료 후 rerun
+    send_and_stream(picked)  # 내부에서 완성 후 한 번에 표시 + rerun
 
 # ================= 대화 렌더 (입력/칩 처리 뒤) =================
 for m in st.session_state.messages:

@@ -56,7 +56,7 @@ st.markdown("""
 .chip a{
   flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center;
   text-decoration:none; background:#fff; color:#1F55A4; border:1px solid #7B2BFF;
-  border-radius:100px; padding:8px 10px;            /* ⬅ 패딩 소폭 축소 */
+  border-radius:100px; padding:8px 12px;            /* ⬅ 패딩 소폭 축소 */
   font-weight:800; font-size:12px;                  /* ⬅ 12px로 축소 */
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;  /* 줄바꿈 방지 */
   box-shadow:0 2px 6px rgba(0,0,0,.08); transition:background-color .2s, transform .06s;
@@ -112,11 +112,9 @@ def send_and_stream(user_text: str):
 st.markdown('<div class="quick-title">아래 키워드로 물어볼 수도 있겠감</div>', unsafe_allow_html=True)
 
 chips = [
-  "📝AI 기획서 작성","🛠️툴 추천","💡아이디어 확장",
-  "🔍AI 리서치","🎨피그마 사용법","📄노션 사용법",
-  "🖱️프로토타입 팁","👥UX 리서치 설계","💬프롬프트 가이드"
+  "👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천",
+  "💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"
 ]
-
 # HTML Grid로 3열 고정 + 링크 클릭 → 쿼리파라미터 → 처리 후 제거
 html = ['<div class="chips-wrap"><div class="chip-grid">']
 for label in chips:
@@ -144,7 +142,7 @@ for m in st.session_state.messages:
     st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
 # ----------------- 입력창 -----------------
-if txt := st.chat_input("말감이가 기다리는 중!🥔"):
+if txt := st.chat_input("말감이가 질문 기다리는 중!🥔"):
     send_and_stream(txt)
 
 # ----------------- 카드 종료 -----------------

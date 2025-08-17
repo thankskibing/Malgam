@@ -4,11 +4,11 @@ from urllib.parse import quote, unquote
 from pathlib import Path
 import base64
 
-# ----------------- 기본 -----------------
+# ================= 기본 =================
 st.set_page_config(page_title="말감 챗봇", page_icon="🥔", layout="centered")
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# ----------------- 로고(Base64 인라인) -----------------
+# ================= 유틸 =================
 def logo_tag(path="logo.png"):
     p = Path(path)
     if not p.exists():
@@ -22,7 +22,7 @@ def logo_tag(path="logo.png"):
     ext = (p.suffix[1:] or "png")
     return f'<img src="data:image/{ext};base64,{data}" alt="logo" />'
 
-# ----------------- 스타일 -----------------
+# ================= 스타일 =================
 st.markdown("""
 <style>
 :root{
@@ -33,13 +33,13 @@ st.markdown("""
 /* 헤더 숨기기 + 배경 */
 [data-testid="stHeader"]{display:none;}
 .stApp{background:linear-gradient(180deg,#7B2BFF 0%,#8A39FF 35%,#A04DFF 100%)!important;}
-/* 하단 고정 UI가 본문을 가리지 않도록 패딩 확보 */
+/* 하단 고정 UI(칩+입력창)가 본문을 가리지 않도록 패딩 확보 */
 .block-container{
   padding-top:0!important;
   padding-bottom: calc(var(--chips-h) + var(--chat-input-h) + 16px) !important;
 }
 
-/* 상단 바 */
+/* 상단바 */
 .topbar{display:flex;align-items:center;gap:12px;padding:20px 16px 8px}
 .topbar h1{color:#fff;margin:0;font-size:28px;line-height:1}
 .topbar img{height:40px;max-width:120px;width:auto;object-fit:contain;}
@@ -61,10 +61,10 @@ st.markdown("""
 [data-testid="stSpinner"] svg circle{stroke:#FFFFFF !important;}
 [data-testid="stSpinner"] svg path{stroke:#FFFFFF !important; fill:#FFFFFF !important;}
 
-/* 입력창: 화면 하단 고정, 항상 칩보다 위로 */
+/* ===== 입력창: 화면 하단 고정, 최상단 z-index 보장 ===== */
 [data-testid="stChatInput"]{
   position: fixed; left: 0; right: 0; bottom: 0;
-  z-index: 10002;
+  z-index: 2147483647; /* 최우선 */
   background:#F5F1FF!important;border-radius:999px!important;border:1px solid #E0CCFF!important;
   box-shadow:0 -2px 8px rgba(123,43,255,.15)!important;padding:6px 12px!important
 }
@@ -72,12 +72,12 @@ st.markdown("""
 [data-testid="stChatInput"] textarea,[data-testid="stChatInput"] input,[data-testid="stChatInput"] div[contenteditable="true"]{border:none!important;outline:none!important;box-shadow:none!important;background:transparent!important}
 [data-testid="stChatInput"] button svg path{fill:#7B2BFF!important}
 
-/* ===== 퀵칩: 입력창 바로 위에 고정 ===== */
+/* ===== 퀵칩: 입력창 바로 위에 고정 (입력창보다 낮은 z-index) ===== */
 .chips-fixed{
   position: fixed;
   left: 0; right: 0;
   bottom: var(--chat-input-h);
-  z-index: 10001; /* 입력창 아래, 본문 위 */
+  z-index: 2147483000; /* 입력창보다 낮게 */
   background: linear-gradient(180deg,#7B2BFF 0%,#8A39FF 60%,#A04DFF 100%);
   padding: 12px 16px 14px;
   box-shadow: 0 -4px 12px rgba(0,0,0,.15);
@@ -95,17 +95,17 @@ st.markdown("""
 .chips-fixed .chip a:hover{background:#F5F1FF}
 .chips-fixed .chip a:active{transform:scale(.98)}
 
-/* 모바일: 입력창 높이가 더 큰 편 → 보정 */
+/* 모바일 높이 보정 */
 @media (max-width: 480px){
   :root{ --chat-input-h: 76px; }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------- 상단 바 -----------------
+# ================= 상단바 =================
 st.markdown(f'<div class="topbar">{logo_tag("logo.png")}<h1>말감 챗봇</h1></div>', unsafe_allow_html=True)
 
-# ----------------- 세션 -----------------
+# ================= 세션 =================
 SYSTEM = """#지침: 너는 ui/ux 기획, 디자인, 리서처 업무를 도와주는 말감이야.
 친근하게 답하고 마지막에 답변에 맞는 이모지 추가. 영어 질문도 한글로 답변."""
 WELCOME = "안녕하세요! 저는 여러분을 도와줄 ‘말하는 감자 말감이’예요. 궁금한 점이나 고민이 있다면 자유롭게 물어보라감!😊"
@@ -115,10 +115,10 @@ if "messages" not in st.session_state:
 if "welcome_shown" not in st.session_state:
     st.session_state.welcome_shown = False
 
-# ----------------- 응답 함수 (스트리밍 즉시 표시 + 완료 후 rerun) -----------------
+# ================= 전송 함수 (스트리밍 즉시 표시 + 완료 후 rerun) =================
 def send_and_stream(user_text: str):
     st.session_state.messages.append({"role":"user","content":user_text})
-    ph = st.empty()  # 스트리밍용 자리
+    ph = st.empty()  # 스트리밍 표시용 영역
     with st.spinner("🥔💭말감이 생각 중…"):
         stream = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -134,10 +134,10 @@ def send_and_stream(user_text: str):
     ph.empty()
     st.rerun()
 
-# ----------------- 카드 시작 -----------------
+# ================= 카드 시작 =================
 st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
-# 환영 메시지
+# 환영 메시지(최초 1회)
 if not st.session_state.welcome_shown:
     st.markdown(f'<div class="chat-bubble assistant-bubble">{WELCOME}</div>', unsafe_allow_html=True)
     st.session_state.welcome_shown = True
@@ -147,17 +147,15 @@ user_text = st.chat_input("말감이가 질문 기다리는 중!🥔")
 if user_text:
     send_and_stream(user_text)
 
-# ========= (B) 퀵칩 입력 선처리 (URL 파라미터) =========
+# ========= (B) 퀵칩 URL 파라미터 → 안전한 2-스텝 처리 =========
 qp = st.query_params
 raw = qp.get("chip", None)
+
 if raw:
     picked_raw = raw[0] if isinstance(raw, list) else raw
     picked = unquote(picked_raw)
-    if not st.session_state.get("_chip_lock"):
-        st.session_state["_chip_lock"] = True
-        send_and_stream(picked)  # 내부에서 rerun 호출
-        st.session_state["_chip_lock"] = False
-    # 파라미터 정리 (예외 호환)
+
+    # 1) URL 파라미터 먼저 제거(중복 처리/깜빡임 방지)
     try:
         if "chip" in st.query_params:
             del st.query_params["chip"]
@@ -167,17 +165,26 @@ if raw:
         except Exception:
             pass
 
-# ----------------- 대화 렌더 (입력/칩 처리 후) -----------------
+    # 2) 다음 렌더에서 전송하도록 세션에 저장 후 재실행
+    st.session_state["_pending_chip"] = picked
+    st.rerun()
+
+# 다음 렌더에서만 실제 전송 실행 (URL 파라미터 없음 → 안정)
+if st.session_state.get("_pending_chip"):
+    picked = st.session_state.pop("_pending_chip")
+    send_and_stream(picked)  # 내부에서 스트리밍 + 완료 후 rerun
+
+# ================= 대화 렌더 (입력/칩 처리 뒤) =================
 for m in st.session_state.messages:
     if m["role"] == "system":
         continue
     cls = "user-bubble" if m["role"] == "user" else "assistant-bubble"
     st.markdown(f'<div class="{cls} chat-bubble">{m["content"]}</div>', unsafe_allow_html=True)
 
-# ----------------- 카드 종료 -----------------
+# ================= 카드 종료 =================
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ----------------- 퀵칩 (입력창 위 고정) -----------------
+# ================= 퀵칩(입력창 위 고정) =================
 chips = [
   "👥UX 리서치 설계","📝AI 기획서 작성","🛠️툴 추천",
   "💬프롬프트 가이드","🎨피그마 사용법","📄노션 사용법"
